@@ -1,11 +1,9 @@
 Map<String, String> targetDirs = {
-  'target1': '/Library/WebServer/Documents/Project1/Work',
-  'target2': '/Users/jeon-yongsu/MyDocuments/aaa',
-  'target3': '/Users/jeon-yongsu/MyDocuments/modsave',
+  'target1': r'C:\Users\KEENAGER\Documents\aaa',
+  'target2': r'C:\Users\KEENAGER\Downloads\bbb',
 };
 
 Map<String, String> targetDirs2 = {
-  'target1': '/Library/WebServer/Documents/Project1/Work11',
-  'target2': '/Users/jeon-yongsu/MyDocuments/aaa11',
-  'target3': '/Users/jeon-yongsu/MyDocuments/modsave11',
+  'target1': r'C:\Users\KEENAGER\Documents\aaa11',
+  'target2': r'C:\Users\KEENAGER\Downloads\bbb11',
 };

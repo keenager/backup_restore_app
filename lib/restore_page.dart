@@ -51,6 +51,7 @@ class _RestorePageState extends State<RestorePage> {
                         copyFilesFolders(entity, destDir);
                       }
                     }
+                    showSnackBar(context);
                   },
                 ),
               ],
@@ -89,5 +90,16 @@ class _RestorePageState extends State<RestorePage> {
         entity.copySync(path.join(dest.path, path.basename(entity.path)));
       }
     }
+  }
+
+  void showSnackBar(ctx) {
+    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+      content: Text(
+        '복사 완료!',
+        textAlign: TextAlign.center,
+        style: TextStyle(),
+      ),
+      duration: Duration(seconds: 2),
+    ));
   }
 }

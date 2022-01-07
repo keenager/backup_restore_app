@@ -49,20 +49,29 @@ class BackupPage extends StatelessWidget {
 
 class PickFoldersFiles extends StatelessWidget {
   final Map<String, String> dir;
-
   const PickFoldersFiles(this.dir, {Key? key}) : super(key: key);
 
-  Future<String> fileDirNamesOf(String dir) async {
-    var dirList = Directory(dir).list();
-    String result = '';
-    await for (final entity in dirList) {
-      if (entity is Directory) {
-        var temp = List.from(entity.uri.pathSegments);
-        temp.removeLast();
-        result += 'Folder[' + temp.last + '] ';
-      } else {
-        result += entity.uri.pathSegments.last + ', ';
-      }
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: pick(),
+    );
+  }
+
+  // 리스트 뷰, 리스트 타일로 만들어 보기
+
+  List<Widget> pick() {
+    List<Widget> result = [];
+    for (final entry in dir.entries) {
+      String filesStr = fileDirNamesOf(entry.value);
+      result.add(makeTextInContainer('타겟 폴더: ${entry.key} (${entry.value})'));
+      result.add(makeTextInContainer('복사할 파일&폴더: $filesStr'));
+      result.add(Divider(
+        thickness: 1.5,
+        indent: 20,
+        endIndent: 20,
+      ));
     }
     return result;
   }
@@ -74,40 +83,19 @@ class PickFoldersFiles extends StatelessWidget {
     );
   }
 
-  Future<List<Widget>> pick() async {
-    List<Widget> result = [];
-
-    for (final entry in dir.entries) {
-      String filesStr = await fileDirNamesOf(entry.value);
-      result.add(makeTextInContainer('타겟 폴더: ${entry.key} (${entry.value})'));
-      result.add(makeTextInContainer('복사할 파일&폴더: $filesStr'));
-      result.add(Divider(
-        thickness: 1.5,
-        indent: 20,
-        endIndent: 20,
-      ));
+  String fileDirNamesOf(String dir) {
+    List<FileSystemEntity> dirList = Directory(dir).listSync();
+    String result = '';
+    for (final entity in dirList) {
+      if (entity is Directory) {
+        var temp = List.from(entity.uri.pathSegments);
+        temp.removeLast();
+        result += 'Folder[' + temp.last + '] ';
+      } else {
+        result += entity.uri.pathSegments.last + ', ';
+      }
     }
-
     return result;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: pick(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (!snapshot.hasData) {
-          return CircularProgressIndicator();
-        } else if (snapshot.hasError) {
-          return Text('에러 발생');
-        } else {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: snapshot.data,
-          );
-        }
-      },
-    );
   }
 }
 
@@ -145,7 +133,7 @@ class _CopyFilesState extends State<CopyFiles> {
                   destDir.createSync();
                   copyFilesFolders(Directory(entry.value), destDir);
                 }
-                Process.run('open', [destStr]);
+                Process.run('explorer', [destStr]);
               },
             ),
           ],
