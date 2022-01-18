@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'path_map.dart';
 import 'package:path/path.dart' as path;
+import 'copy_func.dart';
+
+final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
 
 class RestorePage extends StatefulWidget {
   const RestorePage({Key? key}) : super(key: key);
@@ -12,6 +15,7 @@ class RestorePage extends StatefulWidget {
 }
 
 class _RestorePageState extends State<RestorePage> {
+  bool isBackupDir = false;
   String backupStr = '';
 
   @override
@@ -39,20 +43,7 @@ class _RestorePageState extends State<RestorePage> {
                 ),
                 ElevatedButton(
                   child: Text('복사'),
-                  onPressed: () {
-                    Directory backupDir = Directory(backupStr);
-                    List<FileSystemEntity> backupList =
-                        backupDir.listSync(recursive: false);
-                    for (final entity in backupList) {
-                      if (entity is Directory) {
-                        Directory destDir = Directory(
-                            targetDirs2[path.basename(entity.path)] ?? '');
-                        destDir.createSync();
-                        copyFilesFolders(entity, destDir);
-                      }
-                    }
-                    showSnackBar(context);
-                  },
+                  onPressed: restoreProcess,
                 ),
               ],
             )
@@ -68,34 +59,66 @@ class _RestorePageState extends State<RestorePage> {
     if (selectedStr == null) return;
 
     List<FileSystemEntity> dirList = Directory(selectedStr).listSync();
-    bool isThere = false;
     for (final dir in dirList) {
-      if (targetDirs.keys.any((key) => dir.path.contains(key))) {
-        isThere = true;
+      if (Path(userName).targetDirs.keys.any((key) => dir.path.contains(key))) {
+        isBackupDir = true;
       }
     }
-    backupStr = isThere == true ? selectedStr : '백업 폴더가 아닙니다.';
+    backupStr = isBackupDir ? selectedStr : '백업 폴더가 아닙니다.';
     setState(() {});
   }
 
-  void copyFilesFolders(Directory src, Directory dest) {
-    List<FileSystemEntity> srcList = src.listSync(recursive: false);
-    for (var entity in srcList) {
-      if (entity is Directory) {
-        Directory newDir = Directory(
-            path.join(dest.absolute.path, path.basename(entity.path)));
-        newDir.createSync();
-        copyFilesFolders(entity.absolute, newDir);
-      } else if (entity is File) {
-        entity.copySync(path.join(dest.path, path.basename(entity.path)));
+  void restoreProcess() {
+    if (!isBackupDir) {
+      showSnackBar(context, '백업해놓은 폴더를 선택하세요.');
+    } else {
+      Directory backupDir = Directory(backupStr);
+      List<FileSystemEntity> backupList = backupDir.listSync(recursive: false);
+      Map<String, String> myPathMap = Path(userName).targetDirs2;
+      //배포판에서는 targetDir로 통합
+      //통합에 수반되는 코드 수정 필요.
+
+      //백업 디렉토리 내부를 순회
+      for (final entity in backupList) {
+        String srcDirName = path.basename(entity.path);
+
+        //해당 요소가 맵에 없을 때
+        // (= 혹시 백업과 무관한 폴더나 파일이 있을 때)
+        if (!myPathMap.containsKey(srcDirName)) {
+          continue;
+        }
+
+        Directory srcDir = Directory(entity.path);
+        String mapValue = myPathMap[srcDirName]!;
+
+        //해당 요소에 파일 하나만 들어 있는 경우
+        // (= 백업 대상이 파일 하나)
+        List inner = srcDir.listSync(recursive: false);
+        if (inner.length == 1 && inner[0] is File) {
+          Directory destDir = File(mapValue).parent;
+          destDir.createSync();
+          copyFile(inner[0], destDir, path.basename(mapValue));
+          continue;
+        }
+
+        //일반적인 경우
+        Directory destDir = Directory(mapValue);
+        destDir.createSync();
+        copyFilesFolders(srcDir, destDir);
       }
+      showSnackBar(context, '복사 완료!');
     }
   }
 
-  void showSnackBar(ctx) {
+  //배포 버전에서는 백업 부분과 같아질 듯 하므로 copy_func.dart로 통합
+  void copyFile(File src, Directory dest, String str) {
+    src.copySync(path.join(dest.path, str));
+  }
+
+  void showSnackBar(BuildContext ctx, String str) {
     ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
       content: Text(
-        '복사 완료!',
+        str,
         textAlign: TextAlign.center,
         style: TextStyle(),
       ),

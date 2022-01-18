@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'path_map.dart';
 import 'package:path/path.dart' as path;
+import 'copy_func.dart';
+
+final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
 
 class BackupPage extends StatelessWidget {
   const BackupPage({Key? key}) : super(key: key);
@@ -34,80 +37,62 @@ class BackupPage extends StatelessWidget {
           ],
         ),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            PickFoldersFiles(targetDirs),
-            CopyFiles(targetDirs),
-          ],
-        ),
+      body: Column(
+        children: [
+          Expanded(
+            child: PickWidget(Path(userName).targetDirs),
+          ),
+          CopyWidget(Path(userName).targetDirs),
+        ],
       ),
     );
   }
 }
 
-class PickFoldersFiles extends StatelessWidget {
+class PickWidget extends StatelessWidget {
   final Map<String, String> dir;
-  const PickFoldersFiles(this.dir, {Key? key}) : super(key: key);
+  const PickWidget(this.dir, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: pick(),
+    var entries = dir.entries.toList();
+    return ListView.separated(
+      itemCount: entries.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(entries[index].key),
+          subtitle: Text(entries[index].value),
+        );
+      },
+      separatorBuilder: (context, index) => Divider(),
     );
   }
 
-  // 리스트 뷰, 리스트 타일로 만들어 보기
-
-  List<Widget> pick() {
-    List<Widget> result = [];
-    for (final entry in dir.entries) {
-      String filesStr = fileDirNamesOf(entry.value);
-      result.add(makeTextInContainer('타겟 폴더: ${entry.key} (${entry.value})'));
-      result.add(makeTextInContainer('복사할 파일&폴더: $filesStr'));
-      result.add(Divider(
-        thickness: 1.5,
-        indent: 20,
-        endIndent: 20,
-      ));
-    }
-    return result;
-  }
-
-  Widget makeTextInContainer(String str) {
-    return Container(
-      child: Text(str),
-      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-    );
-  }
-
-  String fileDirNamesOf(String dir) {
-    List<FileSystemEntity> dirList = Directory(dir).listSync();
-    String result = '';
-    for (final entity in dirList) {
-      if (entity is Directory) {
-        var temp = List.from(entity.uri.pathSegments);
-        temp.removeLast();
-        result += 'Folder[' + temp.last + '] ';
-      } else {
-        result += entity.uri.pathSegments.last + ', ';
-      }
-    }
-    return result;
-  }
+  // String fileDirNamesOf(String dir) {
+  //   List<FileSystemEntity> dirList = Directory(dir).listSync();
+  //   String result = '';
+  //   for (final entity in dirList) {
+  //     if (entity is Directory) {
+  //       var temp = List.from(entity.uri.pathSegments);
+  //       temp.removeLast();
+  //       result += 'Folder[' + temp.last + '] ';
+  //     } else {
+  //       result += entity.uri.pathSegments.last + ', ';
+  //     }
+  //   }
+  //   return result;
+  // }
 }
 
-class CopyFiles extends StatefulWidget {
+class CopyWidget extends StatefulWidget {
   final Map<String, String> dir;
-  const CopyFiles(this.dir, {Key? key}) : super(key: key);
+  const CopyWidget(this.dir, {Key? key}) : super(key: key);
 
   @override
-  _CopyFilesState createState() => _CopyFilesState();
+  _CopyWidgetState createState() => _CopyWidgetState();
 }
 
-class _CopyFilesState extends State<CopyFiles> {
+class _CopyWidgetState extends State<CopyWidget> {
   String destStr = '';
 
   @override
@@ -131,7 +116,12 @@ class _CopyFilesState extends State<CopyFiles> {
                 for (final entry in widget.dir.entries) {
                   Directory destDir = Directory(path.join(destStr, entry.key));
                   destDir.createSync();
-                  copyFilesFolders(Directory(entry.value), destDir);
+                  String srcStr = entry.value;
+                  if (FileSystemEntity.isFileSync(srcStr)) {
+                    copyFile(File(srcStr), destDir);
+                  } else {
+                    copyFilesFolders(Directory(srcStr), destDir);
+                  }
                 }
                 Process.run('explorer', [destStr]);
               },
@@ -148,17 +138,7 @@ class _CopyFilesState extends State<CopyFiles> {
     setState(() {});
   }
 
-  void copyFilesFolders(Directory src, Directory dest) {
-    List<FileSystemEntity> srcList = src.listSync(recursive: false);
-    for (var entity in srcList) {
-      if (entity is Directory) {
-        Directory newDir = Directory(
-            path.join(dest.absolute.path, path.basename(entity.path)));
-        newDir.createSync();
-        copyFilesFolders(entity.absolute, newDir);
-      } else if (entity is File) {
-        entity.copySync(path.join(dest.path, path.basename(entity.path)));
-      }
-    }
+  void copyFile(File src, Directory dest) {
+    src.copySync(path.join(dest.path, path.basename(src.path)));
   }
 }
