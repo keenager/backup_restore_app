@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'path_map.dart';
 import 'package:path/path.dart' as path;
-import 'copy_func.dart';
+import 'common_func.dart';
 
 final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
 
@@ -43,6 +43,9 @@ class BackupPage extends StatelessWidget {
             child: PickWidget(Path(userName).targetDirs),
           ),
           CopyWidget(Path(userName).targetDirs),
+          SizedBox(
+            height: 50,
+          ),
         ],
       ),
     );
@@ -55,13 +58,45 @@ class PickWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var entries = dir.entries.toList();
+    List entries = dir.entries.toList();
+    List<String> exist = [];
+    List<int> dirCntList = [];
+    List<int> fileCntList = [];
+    for (final entry in entries) {
+      bool isThere = false;
+      if (File(entry.value).existsSync()) {
+        isThere = true;
+        dirCntList.add(0);
+        fileCntList.add(1);
+      } else if (Directory(entry.value).existsSync()) {
+        isThere = true;
+        int fileCnt = 0, dirCnt = 0;
+        List entities = Directory(entry.value).listSync(recursive: true);
+        for (final entity in entities) {
+          if (entity is File) {
+            fileCnt++;
+          } else if (entity is Directory) {
+            dirCnt++;
+          }
+        }
+        fileCntList.add(fileCnt);
+        dirCntList.add(dirCnt);
+      } else {
+        fileCntList.add(0);
+        dirCntList.add(0);
+      }
+      exist.add(isThere ? '있음' : '없음');
+    }
     return ListView.separated(
       itemCount: entries.length,
       itemBuilder: (context, index) {
         return ListTile(
           title: Text(entries[index].key),
-          subtitle: Text(entries[index].value),
+          subtitle: Text(entries[index].value +
+              '\n' +
+              exist[index] +
+              ' 폴더: ${dirCntList[index]}개, 파일: ${fileCntList[index]}개'),
+          isThreeLine: true,
         );
       },
       separatorBuilder: (context, index) => Divider(),
@@ -93,13 +128,31 @@ class CopyWidget extends StatefulWidget {
 }
 
 class _CopyWidgetState extends State<CopyWidget> {
-  String destStr = '';
+  String destStr = '없음';
+
+  void backupProcess() {
+    if (destStr == '없음') {
+      showSnackBar(context, '백업 대상을 저장할 폴더를 선택하세요.');
+    } else {
+      for (final entry in widget.dir.entries) {
+        Directory destDir = Directory(path.join(destStr, entry.key));
+        destDir.createSync();
+        String srcStr = entry.value;
+        if (FileSystemEntity.isFileSync(srcStr)) {
+          copyFile(File(srcStr), destDir);
+        } else {
+          copyFilesFolders(Directory(srcStr), destDir);
+        }
+      }
+      Process.run('explorer', [destStr]);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text('선택된 폴더: ' + (destStr == '' ? '없음' : destStr)),
+        Text('선택된 폴더: ' + destStr),
         SizedBox(
           height: 10,
         ),
@@ -112,19 +165,7 @@ class _CopyWidgetState extends State<CopyWidget> {
             ),
             ElevatedButton(
               child: Text('복사'),
-              onPressed: () {
-                for (final entry in widget.dir.entries) {
-                  Directory destDir = Directory(path.join(destStr, entry.key));
-                  destDir.createSync();
-                  String srcStr = entry.value;
-                  if (FileSystemEntity.isFileSync(srcStr)) {
-                    copyFile(File(srcStr), destDir);
-                  } else {
-                    copyFilesFolders(Directory(srcStr), destDir);
-                  }
-                }
-                Process.run('explorer', [destStr]);
-              },
+              onPressed: backupProcess,
             ),
           ],
         ),
@@ -134,11 +175,15 @@ class _CopyWidgetState extends State<CopyWidget> {
 
   void selectFolder() async {
     // 폴더 선택
-    destStr = await FilePicker.platform.getDirectoryPath() ?? '';
+    destStr = await FilePicker.platform.getDirectoryPath() ?? '없음';
     setState(() {});
   }
 
   void copyFile(File src, Directory dest) {
     src.copySync(path.join(dest.path, path.basename(src.path)));
+  }
+
+  void delete(FileSystemEntity target) {
+    target.deleteSync(recursive: true);
   }
 }

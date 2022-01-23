@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
@@ -13,4 +14,15 @@ void copyFilesFolders(Directory src, Directory dest) {
       entity.copySync(path.join(dest.path, path.basename(entity.path)));
     }
   }
+}
+
+void showSnackBar(BuildContext ctx, String str) {
+  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+    content: Text(
+      str,
+      textAlign: TextAlign.center,
+      style: TextStyle(),
+    ),
+    duration: Duration(seconds: 2),
+  ));
 }

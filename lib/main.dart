@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test_app/backup_page.dart';
 import 'package:flutter_test_app/restore_page.dart';
 
+//갯수, 삭제, 똑같이
 void main() {
   runApp(const MyApp());
 }

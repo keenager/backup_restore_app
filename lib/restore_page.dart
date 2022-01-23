@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'path_map.dart';
 import 'package:path/path.dart' as path;
-import 'copy_func.dart';
+import 'common_func.dart';
 
 final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
 
@@ -113,16 +113,5 @@ class _RestorePageState extends State<RestorePage> {
   //배포 버전에서는 백업 부분과 같아질 듯 하므로 copy_func.dart로 통합
   void copyFile(File src, Directory dest, String str) {
     src.copySync(path.join(dest.path, str));
-  }
-
-  void showSnackBar(BuildContext ctx, String str) {
-    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-      content: Text(
-        str,
-        textAlign: TextAlign.center,
-        style: TextStyle(),
-      ),
-      duration: Duration(seconds: 2),
-    ));
   }
 }
