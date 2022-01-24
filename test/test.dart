@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 
 void main() {
-  String userName = Platform.environment['username']!;
+  String? userName = Platform.environment['username'];
   String name = r'C:\Users\'
       '$userName'
       r'\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks';
@@ -10,6 +10,6 @@ void main() {
   // var fp = f.parent;
   // print(fp);
   // print(fp.path);
-
+  print(userName);
   print(File(name).existsSync());
 }

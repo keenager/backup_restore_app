@@ -6,6 +6,7 @@ import 'package:path/path.dart' as path;
 import 'common_func.dart';
 
 final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
+List<String> exist = [];
 
 class BackupPage extends StatelessWidget {
   const BackupPage({Key? key}) : super(key: key);
@@ -59,7 +60,6 @@ class PickWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List entries = dir.entries.toList();
-    List<String> exist = [];
     List<int> dirCntList = [];
     List<int> fileCntList = [];
     for (final entry in entries) {
@@ -91,12 +91,25 @@ class PickWidget extends StatelessWidget {
       itemCount: entries.length,
       itemBuilder: (context, index) {
         return ListTile(
+          leading: exist[index] == '있음'
+              ? Icon(Icons.check_circle, color: Colors.green)
+              : Icon(Icons.quiz_rounded),
           title: Text(entries[index].key),
           subtitle: Text(entries[index].value +
               '\n' +
               exist[index] +
               ' 폴더: ${dirCntList[index]}개, 파일: ${fileCntList[index]}개'),
           isThreeLine: true,
+          trailing: exist[index] == '있음'
+              ? Tooltip(
+                  message: '누르면 해당 폴더가 열립니다.',
+                  child: IconButton(
+                      onPressed: () {
+                        Process.run('explorer', [entries[index].value]);
+                      },
+                      icon: Icon(Icons.open_in_browser)),
+                )
+              : null,
         );
       },
       separatorBuilder: (context, index) => Divider(),
@@ -134,18 +147,38 @@ class _CopyWidgetState extends State<CopyWidget> {
     if (destStr == '없음') {
       showSnackBar(context, '백업 대상을 저장할 폴더를 선택하세요.');
     } else {
-      for (final entry in widget.dir.entries) {
-        Directory destDir = Directory(path.join(destStr, entry.key));
-        destDir.createSync();
-        String srcStr = entry.value;
-        if (FileSystemEntity.isFileSync(srcStr)) {
-          copyFile(File(srcStr), destDir);
-        } else {
-          copyFilesFolders(Directory(srcStr), destDir);
+      widget.dir.entries.toList().asMap().forEach((index, entry) {
+        //백업 대상이 없는 경우 스킵
+        if (exist[index] == '없음') {
+          return;
         }
-      }
+        //key 이름으로 하위 폴더 생성
+        Directory destDir = Directory(path.join(destStr, entry.key));
+        destDir.createSync(recursive: true);
+        //대상이 파일인 경우
+        if (FileSystemEntity.isFileSync(entry.value)) {
+          copyFile(File(entry.value), destDir);
+          File(entry.value).deleteSync(recursive: true);
+        } else {
+          //대상이 디렉토리인 경우
+          Directory srcDir = Directory(entry.value);
+          copyFilesFolders(srcDir, destDir);
+          //삭제
+          srcDir.deleteSync(recursive: true);
+        }
+      });
       Process.run('explorer', [destStr]);
     }
+  }
+
+  void selectFolder() async {
+    // 폴더 선택
+    destStr = await FilePicker.platform.getDirectoryPath() ?? '없음';
+    setState(() {});
+  }
+
+  void copyFile(File src, Directory dest) {
+    src.copySync(path.join(dest.path, path.basename(src.path)));
   }
 
   @override
@@ -171,19 +204,5 @@ class _CopyWidgetState extends State<CopyWidget> {
         ),
       ],
     );
-  }
-
-  void selectFolder() async {
-    // 폴더 선택
-    destStr = await FilePicker.platform.getDirectoryPath() ?? '없음';
-    setState(() {});
-  }
-
-  void copyFile(File src, Directory dest) {
-    src.copySync(path.join(dest.path, path.basename(src.path)));
-  }
-
-  void delete(FileSystemEntity target) {
-    target.deleteSync(recursive: true);
   }
 }

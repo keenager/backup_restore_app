@@ -1,6 +1,5 @@
 class Path {
   late Map<String, String> targetDirs;
-  late Map<String, String> targetDirs2;
 
   Path(String str) {
     targetDirs = {
@@ -9,14 +8,7 @@ class Path {
       '엣지 즐겨찾기': r'C:\Users\'
           '$str'
           r'\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks',
-    };
-
-    targetDirs2 = {
-      'target1': r'C:\Users\' '$str' r'\Documents\aaa111',
-      'target2': r'C:\Users\' '$str' r'\Downloads\bbb111',
-      '엣지 즐겨찾기': r'C:\Users\'
-          '$str'
-          r'\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks111',
+      '메모지': r'C:\work\ps\mo\사용자메모지',
     };
   }
 }

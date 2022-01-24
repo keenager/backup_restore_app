@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test_app/backup_page.dart';
 import 'package:flutter_test_app/restore_page.dart';
 
-//갯수, 삭제, 똑같이
+// 폴더는 남겨두고 내용만 삭제, 개별 삭제 기능 구현
+
 void main() {
   runApp(const MyApp());
 }

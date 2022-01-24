@@ -43,7 +43,7 @@ class _RestorePageState extends State<RestorePage> {
                 ),
                 ElevatedButton(
                   child: Text('복사'),
-                  onPressed: restoreProcess,
+                  onPressed: _restoreProcess,
                 ),
               ],
             )
@@ -68,15 +68,13 @@ class _RestorePageState extends State<RestorePage> {
     setState(() {});
   }
 
-  void restoreProcess() {
+  void _restoreProcess() {
     if (!isBackupDir) {
       showSnackBar(context, '백업해놓은 폴더를 선택하세요.');
     } else {
       Directory backupDir = Directory(backupStr);
       List<FileSystemEntity> backupList = backupDir.listSync(recursive: false);
-      Map<String, String> myPathMap = Path(userName).targetDirs2;
-      //배포판에서는 targetDir로 통합
-      //통합에 수반되는 코드 수정 필요.
+      Map<String, String> myPathMap = Path(userName).targetDirs;
 
       //백업 디렉토리 내부를 순회
       for (final entity in backupList) {
@@ -90,6 +88,10 @@ class _RestorePageState extends State<RestorePage> {
 
         Directory srcDir = Directory(entity.path);
         String mapValue = myPathMap[srcDirName]!;
+        //메모지의 경우만 당초와 다른 디렉토리로 복사되도록 설정
+        if (srcDirName == '메모지') {
+          mapValue = myPathMap[srcDirName]! + r'\임시';
+        }
 
         //해당 요소에 파일 하나만 들어 있는 경우
         // (= 백업 대상이 파일 하나)
@@ -97,21 +99,17 @@ class _RestorePageState extends State<RestorePage> {
         if (inner.length == 1 && inner[0] is File) {
           Directory destDir = File(mapValue).parent;
           destDir.createSync();
-          copyFile(inner[0], destDir, path.basename(mapValue));
+          // copyFile(inner[0], destDir, path.basename(mapValue));
+          (inner[0] as File).copySync(mapValue);
           continue;
         }
 
         //일반적인 경우
         Directory destDir = Directory(mapValue);
-        destDir.createSync();
+        destDir.createSync(recursive: true);
         copyFilesFolders(srcDir, destDir);
       }
       showSnackBar(context, '복사 완료!');
     }
-  }
-
-  //배포 버전에서는 백업 부분과 같아질 듯 하므로 copy_func.dart로 통합
-  void copyFile(File src, Directory dest, String str) {
-    src.copySync(path.join(dest.path, str));
   }
 }
