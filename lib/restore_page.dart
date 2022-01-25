@@ -88,20 +88,18 @@ class _RestorePageState extends State<RestorePage> {
 
         Directory srcDir = Directory(entity.path);
         String mapValue = myPathMap[srcDirName]!;
+
+        // 백업 대상이 특정 파일 하나인 경우
+        if (srcDirName.contains('파일')) {
+          Directory destDir = File(mapValue).parent;
+          destDir.createSync();
+          (srcDir.listSync().first as File).copySync(mapValue);
+          continue;
+        }
+
         //메모지의 경우만 당초와 다른 디렉토리로 복사되도록 설정
         if (srcDirName == '메모지') {
           mapValue = myPathMap[srcDirName]! + r'\임시';
-        }
-
-        //해당 요소에 파일 하나만 들어 있는 경우
-        // (= 백업 대상이 파일 하나)
-        List inner = srcDir.listSync(recursive: false);
-        if (inner.length == 1 && inner[0] is File) {
-          Directory destDir = File(mapValue).parent;
-          destDir.createSync();
-          // copyFile(inner[0], destDir, path.basename(mapValue));
-          (inner[0] as File).copySync(mapValue);
-          continue;
         }
 
         //일반적인 경우

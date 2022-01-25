@@ -155,16 +155,16 @@ class _CopyWidgetState extends State<CopyWidget> {
         //key 이름으로 하위 폴더 생성
         Directory destDir = Directory(path.join(destStr, entry.key));
         destDir.createSync(recursive: true);
-        //대상이 파일인 경우
+        //대상이 특정 파일 하나인 경우
         if (FileSystemEntity.isFileSync(entry.value)) {
           copyFile(File(entry.value), destDir);
           File(entry.value).deleteSync(recursive: true);
         } else {
           //대상이 디렉토리인 경우
           Directory srcDir = Directory(entry.value);
-          copyFilesFolders(srcDir, destDir);
+          copyFilesFolders(srcDir, destDir, delete: true);
           //삭제
-          srcDir.deleteSync(recursive: true);
+          // srcDir.deleteSync(recursive: true);
         }
       });
       Process.run('explorer', [destStr]);
