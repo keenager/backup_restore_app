@@ -6,7 +6,10 @@ import 'package:path/path.dart' as path;
 import 'common_func.dart';
 
 final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
-List<String> exist = [];
+final Map<String, String> targetDirs = Path(userName).targetDirs;
+final List entryList = targetDirs.entries.toList();
+List<bool> exist = List<bool>.generate(targetDirs.length, (int i) => false);
+List<bool> isChecked = List<bool>.generate(targetDirs.length, (int i) => false);
 
 class BackupPage extends StatelessWidget {
   const BackupPage({Key? key}) : super(key: key);
@@ -41,9 +44,9 @@ class BackupPage extends StatelessWidget {
       body: Column(
         children: [
           Expanded(
-            child: PickWidget(Path(userName).targetDirs),
+            child: PickWidget(),
           ),
-          CopyWidget(Path(userName).targetDirs),
+          CopyWidget(),
           SizedBox(
             height: 50,
           ),
@@ -53,88 +56,147 @@ class BackupPage extends StatelessWidget {
   }
 }
 
-class PickWidget extends StatelessWidget {
-  final Map<String, String> dir;
-  const PickWidget(this.dir, {Key? key}) : super(key: key);
+class PickWidget extends StatefulWidget {
+  const PickWidget({Key? key}) : super(key: key);
+
+  @override
+  State<PickWidget> createState() => _PickWidgetState();
+}
+
+class _PickWidgetState extends State<PickWidget> {
+  bool isAllChecked = false;
 
   @override
   Widget build(BuildContext context) {
-    List entries = dir.entries.toList();
     List<int> dirCntList = [];
     List<int> fileCntList = [];
-    for (final entry in entries) {
-      bool isThere = false;
-      if (File(entry.value).existsSync()) {
-        isThere = true;
+    List<int> fileSizeList = [];
+
+    entryList.asMap().forEach((index, entry) {
+      File f = File(entry.value);
+      Directory d = Directory(entry.value);
+
+      if (f.existsSync()) {
+        // 타겟과 일치하는 파일이 있는 경우
         dirCntList.add(0);
         fileCntList.add(1);
-      } else if (Directory(entry.value).existsSync()) {
-        isThere = true;
-        int fileCnt = 0, dirCnt = 0;
-        List entities = Directory(entry.value).listSync(recursive: true);
+        fileSizeList.add(f.lengthSync());
+        exist[index] = true;
+      } else if (d.existsSync()) {
+        // 타겟과 일치하는 디렉토리가 있는 경우
+        int fileCnt = 0, dirCnt = 0, size = 0;
+        List<FileSystemEntity> entities = d.listSync(recursive: true);
         for (final entity in entities) {
           if (entity is File) {
             fileCnt++;
+            size += entity.lengthSync();
           } else if (entity is Directory) {
             dirCnt++;
           }
         }
-        fileCntList.add(fileCnt);
         dirCntList.add(dirCnt);
+        fileCntList.add(fileCnt);
+        fileSizeList.add(size);
+        exist[index] = size > 0 ? true : false;
       } else {
-        fileCntList.add(0);
+        // 타겟이 없는 경우
         dirCntList.add(0);
+        fileCntList.add(0);
+        fileSizeList.add(0);
+        exist[index] = false;
       }
-      exist.add(isThere ? '있음' : '없음');
+    });
+
+    void toggleChecked(bool value) {
+      isChecked.replaceRange(0, targetDirs.length,
+          List<bool>.generate(targetDirs.length, (int i) => value));
     }
-    return ListView.separated(
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: exist[index] == '있음'
-              ? Icon(Icons.check_circle, color: Colors.green)
-              : Icon(Icons.quiz_rounded),
-          title: Text(entries[index].key),
-          subtitle: Text(entries[index].value +
-              '\n' +
-              exist[index] +
-              ' 폴더: ${dirCntList[index]}개, 파일: ${fileCntList[index]}개'),
-          isThreeLine: true,
-          trailing: exist[index] == '있음'
-              ? Tooltip(
-                  message: '누르면 해당 폴더가 열립니다.',
-                  child: IconButton(
-                      onPressed: () {
-                        Process.run('explorer', [entries[index].value]);
-                      },
-                      icon: Icon(Icons.open_in_browser)),
-                )
-              : null,
-        );
-      },
-      separatorBuilder: (context, index) => Divider(),
+
+    String convertSize(int byte) {
+      if (byte < 52) {
+        return byte.toString() + 'byte';
+      } else if (byte < 52429) {
+        return '약 ' + (byte / 1024).toStringAsFixed(1) + 'KB';
+      } else {
+        return '약 ' + (byte / 1048576).toStringAsFixed(1) + 'MB';
+      }
+    }
+
+    return Column(
+      children: [
+        ListTile(
+          leading: Checkbox(
+            value: isAllChecked,
+            onChanged: (bool? value) {
+              setState(() {
+                isAllChecked = value!;
+                toggleChecked(value);
+              });
+            },
+          ),
+          title: Text('전체 선택'),
+          trailing: IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                isAllChecked = false;
+                toggleChecked(false);
+              });
+            },
+          ),
+        ),
+        Divider(color: Colors.black87),
+        Expanded(
+          child: ListView.separated(
+            itemCount: entryList.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                leading: Checkbox(
+                  value: exist[index] ? isChecked[index] : false,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      isChecked[index] = value!;
+                    });
+                  },
+                ),
+                title: Text(entryList[index].key),
+                subtitle: Row(
+                  children: [
+                    exist[index] == true
+                        ? Icon(Icons.check_circle, color: Colors.green)
+                        : Icon(Icons.quiz_rounded),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Text(entryList[index].value +
+                        '\n' +
+                        '폴더: ${dirCntList[index]}개, 파일: ${fileCntList[index]}개, 크기: ${convertSize(fileSizeList[index])}'),
+                  ],
+                ),
+                isThreeLine: true,
+                trailing: exist[index] == true
+                    ? Tooltip(
+                        message: '누르면 해당 폴더가 열립니다.',
+                        child: IconButton(
+                            onPressed: () {
+                              Process.run('explorer', [entryList[index].value]);
+                            },
+                            icon: Icon(Icons.open_in_browser)),
+                      )
+                    : null,
+              );
+            },
+            separatorBuilder: (context, index) => Divider(),
+          ),
+        ),
+      ],
     );
   }
-
-  // String fileDirNamesOf(String dir) {
-  //   List<FileSystemEntity> dirList = Directory(dir).listSync();
-  //   String result = '';
-  //   for (final entity in dirList) {
-  //     if (entity is Directory) {
-  //       var temp = List.from(entity.uri.pathSegments);
-  //       temp.removeLast();
-  //       result += 'Folder[' + temp.last + '] ';
-  //     } else {
-  //       result += entity.uri.pathSegments.last + ', ';
-  //     }
-  //   }
-  //   return result;
-  // }
 }
 
 class CopyWidget extends StatefulWidget {
-  final Map<String, String> dir;
-  const CopyWidget(this.dir, {Key? key}) : super(key: key);
+  // final List<bool>? exist;
+  const CopyWidget({Key? key}) : super(key: key);
 
   @override
   _CopyWidgetState createState() => _CopyWidgetState();
@@ -142,14 +204,13 @@ class CopyWidget extends StatefulWidget {
 
 class _CopyWidgetState extends State<CopyWidget> {
   String destStr = '없음';
-
   void backupProcess() {
     if (destStr == '없음') {
       showSnackBar(context, '백업 대상을 저장할 폴더를 선택하세요.');
     } else {
-      widget.dir.entries.toList().asMap().forEach((index, entry) {
-        //백업 대상이 없는 경우 스킵
-        if (exist[index] == '없음') {
+      entryList.asMap().forEach((index, entry) {
+        //백업 대상이 없거나 체크되지 않은 경우 스킵
+        if (!exist[index] || !isChecked[index]) {
           return;
         }
         //key 이름으로 하위 폴더 생성

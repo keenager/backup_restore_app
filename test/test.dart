@@ -10,6 +10,8 @@ void main() {
   // var fp = f.parent;
   // print(fp);
   // print(fp.path);
-  print(userName);
-  print(File(name).existsSync());
+  // print(userName);
+  // print(File(name).existsSync());
+  Directory aaa = Directory(r'c:\work\ps\mo\사용자메모지');
+  print(aaa.statSync().size);
 }
