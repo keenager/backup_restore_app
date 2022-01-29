@@ -23,6 +23,7 @@ class _RestorePageState extends State<RestorePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text('내보내기'),
       ),
       body: Center(
@@ -106,7 +107,7 @@ class _RestorePageState extends State<RestorePage> {
         //일반적인 경우
         Directory destDir = Directory(mapValue);
         destDir.createSync(recursive: true);
-        copyFilesFolders(srcDir, destDir);
+        copyFilesFolders(srcDir, destDir, task: 'restore');
       }
       showSnackBar(context, '복사 완료!');
     }

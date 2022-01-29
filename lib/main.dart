@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test_app/backup_page.dart';
 import 'package:flutter_test_app/restore_page.dart';
+import 'package:flutter_test_app/delete_page.dart';
 
-// 개별 삭제 기능 구현
+// 개별 삭제 기능 구현(완료)     앱 아이콘
 
 void main() {
   runApp(const MyApp());
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => BackupPage(),
+        '/delete': (context) => DeletePage(),
         '/restore': (context) => RestorePage(),
       },
     );

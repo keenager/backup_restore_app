@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_test_app/drawer.dart';
 import 'path_map.dart';
 import 'package:path/path.dart' as path;
 import 'common_func.dart';
@@ -10,6 +11,7 @@ final Map<String, String> targetDirs = Path(userName).targetDirs;
 final List entryList = targetDirs.entries.toList();
 List<bool> exist = List<bool>.generate(targetDirs.length, (int i) => false);
 List<bool> isChecked = List<bool>.generate(targetDirs.length, (int i) => false);
+bool isDelChecked = true;
 
 class BackupPage extends StatelessWidget {
   const BackupPage({Key? key}) : super(key: key);
@@ -18,35 +20,24 @@ class BackupPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text('가져오기'),
       ),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            ListTile(
-              leading: Icon(Icons.download),
-              title: Text('가져오기'),
-              onTap: () {
-                Navigator.pushNamed(context, '/');
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.upload),
-              title: Text('내보내기'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.pushNamed(context, '/restore');
-              },
-            ),
-          ],
-        ),
-      ),
+      drawer: MyDrawer(),
       body: Column(
         children: [
           Expanded(
             child: PickWidget(),
           ),
+          DeleteWidget(),
           CopyWidget(),
+          IconButton(
+            icon: Icon(Icons.arrow_forward),
+            tooltip: '다음 페이지로(삭제하기)',
+            onPressed: () {
+              Navigator.pushNamed(context, '/delete');
+            },
+          ),
           SizedBox(
             height: 50,
           ),
@@ -194,6 +185,39 @@ class _PickWidgetState extends State<PickWidget> {
   }
 }
 
+class DeleteWidget extends StatefulWidget {
+  const DeleteWidget({Key? key}) : super(key: key);
+
+  @override
+  _DeleteWidgetState createState() => _DeleteWidgetState();
+}
+
+class _DeleteWidgetState extends State<DeleteWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: Row(
+        children: [
+          Tooltip(
+            message: '삭제 후 우측 상단 새로고침 버튼을 누르면 결과를 확인할 수 있습니다.',
+            child: Checkbox(
+              value: isDelChecked,
+              onChanged: (bool? value) {
+                setState(() {
+                  isDelChecked = value!;
+                  print(isDelChecked);
+                });
+              },
+            ),
+          ),
+          Text('백업 후 원본 삭제'),
+        ],
+      ),
+    );
+  }
+}
+
 class CopyWidget extends StatefulWidget {
   // final List<bool>? exist;
   const CopyWidget({Key? key}) : super(key: key);
@@ -204,7 +228,7 @@ class CopyWidget extends StatefulWidget {
 
 class _CopyWidgetState extends State<CopyWidget> {
   String destStr = '없음';
-  void backupProcess() {
+  void _backupProcess() {
     if (destStr == '없음') {
       showSnackBar(context, '백업 대상을 저장할 폴더를 선택하세요.');
     } else {
@@ -223,10 +247,10 @@ class _CopyWidgetState extends State<CopyWidget> {
         } else {
           //대상이 디렉토리인 경우
           Directory srcDir = Directory(entry.value);
-          copyFilesFolders(srcDir, destDir, delete: true);
-          //삭제
-          // srcDir.deleteSync(recursive: true);
+          copyFilesFolders(srcDir, destDir,
+              task: 'backup', delete: isDelChecked);
         }
+        //if (isDelChecked) Directory(entry.value).deleteSync();
       });
       Process.run('explorer', [destStr]);
     }
@@ -259,7 +283,7 @@ class _CopyWidgetState extends State<CopyWidget> {
             ),
             ElevatedButton(
               child: Text('복사'),
-              onPressed: backupProcess,
+              onPressed: _backupProcess,
             ),
           ],
         ),
