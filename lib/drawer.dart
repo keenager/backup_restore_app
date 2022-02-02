@@ -13,7 +13,7 @@ class MyDrawer extends StatelessWidget {
             title: Text('가져오기'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/');
+              Navigator.pushNamed(context, '/backup');
             },
           ),
           ListTile(

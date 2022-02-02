@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_test_app/drawer.dart';
 import 'path_map.dart';
 import 'package:path/path.dart' as path;
 import 'common_func.dart';
 
-final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
-final Map<String, String> targetDirs = Path(userName).targetDirs;
 final List entryList = targetDirs.entries.toList();
 List<bool> exist = List<bool>.generate(targetDirs.length, (int i) => false);
 List<bool> isChecked = List<bool>.generate(targetDirs.length, (int i) => false);
@@ -22,21 +19,38 @@ class BackupPage extends StatelessWidget {
       appBar: AppBar(
         centerTitle: true,
         title: Text('가져오기'),
+        actions: [
+          Tooltip(
+            message: '다음 페이지로(삭제하기)',
+            child: IconButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/delete');
+              },
+              icon: Icon(Icons.arrow_forward),
+            ),
+          )
+        ],
       ),
-      drawer: MyDrawer(),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: PickWidget(),
           ),
           DeleteWidget(),
+          AdditionalWidget(),
           CopyWidget(),
-          IconButton(
-            icon: Icon(Icons.arrow_forward),
-            tooltip: '다음 페이지로(삭제하기)',
-            onPressed: () {
-              Navigator.pushNamed(context, '/delete');
-            },
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: Icon(Icons.arrow_forward),
+                tooltip: '다음 페이지로(삭제하기)',
+                onPressed: () {
+                  Navigator.pushNamed(context, '/delete');
+                },
+              ),
+            ],
           ),
           SizedBox(
             height: 50,
@@ -197,21 +211,58 @@ class _DeleteWidgetState extends State<DeleteWidget> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(15.0),
-      child: Row(
-        children: [
-          Tooltip(
-            message: '삭제 후 우측 상단 새로고침 버튼을 누르면 결과를 확인할 수 있습니다.',
-            child: Checkbox(
-              value: isDelChecked,
-              onChanged: (bool? value) {
-                setState(() {
-                  isDelChecked = value!;
-                  print(isDelChecked);
-                });
-              },
-            ),
+      child: Tooltip(
+        message: '삭제 후 우측 상단 새로고침 버튼을 누르면 결과를 확인할 수 있습니다.',
+        child: SizedBox(
+          width: 200,
+          child: Row(
+            children: [
+              Checkbox(
+                value: isDelChecked,
+                onChanged: (bool? value) {
+                  setState(() {
+                    isDelChecked = value!;
+                  });
+                },
+              ),
+              Text('백업 후 원본 삭제'),
+            ],
           ),
-          Text('백업 후 원본 삭제'),
+        ),
+      ),
+    );
+  }
+}
+
+class AdditionalWidget extends StatelessWidget {
+  const AdditionalWidget({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(15.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextButton(
+            child: Text('판결서 주문, 이유 기재례 & 법원 인증서'),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text('판결서 기재례와 인증서'),
+                    content: Text(
+                        "판결서 작성 관리 시스템에서 사용하던 '사용자 정의' 주문, 이유 기재례와 법원 인증서를 한 번에 내보내기 하는 기능을 해당 시스템에서 제공하고 있으므로, 이를 이용하시면 됩니다."),
+                  );
+                },
+              );
+            },
+          ),
+          TextButton(
+            child: Text('판결서 상용구 & 법원 인증서'),
+            onPressed: () {},
+          ),
         ],
       ),
     );
@@ -219,7 +270,6 @@ class _DeleteWidgetState extends State<DeleteWidget> {
 }
 
 class CopyWidget extends StatefulWidget {
-  // final List<bool>? exist;
   const CopyWidget({Key? key}) : super(key: key);
 
   @override
@@ -282,7 +332,7 @@ class _CopyWidgetState extends State<CopyWidget> {
               onPressed: selectFolder,
             ),
             ElevatedButton(
-              child: Text('복사'),
+              child: Text('가져오기(백업)'),
               onPressed: _backupProcess,
             ),
           ],

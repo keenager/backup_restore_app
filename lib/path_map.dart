@@ -1,3 +1,5 @@
+import 'dart:io';
+
 class Path {
   late Map<String, String> targetDirs;
   late Map<String, String> deleteDirs;
@@ -21,3 +23,6 @@ class Path {
     };
   }
 }
+
+final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
+final Map<String, String> targetDirs = Path(userName).targetDirs;

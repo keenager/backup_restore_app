@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'path_map.dart';
 
-final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
 final Map<String, String> deleteDirs = Path(userName).deleteDirs;
 final List<MapEntry<String, String>> entryList = deleteDirs.entries.toList();
 

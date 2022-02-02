@@ -5,9 +5,6 @@ import 'path_map.dart';
 import 'package:path/path.dart' as path;
 import 'common_func.dart';
 
-final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
-final Map<String, String> targetDirs = Path(userName).targetDirs;
-
 class RestorePage extends StatefulWidget {
   const RestorePage({Key? key}) : super(key: key);
 
@@ -48,7 +45,12 @@ class _RestorePageState extends State<RestorePage> {
                   onPressed: _restoreProcess,
                 ),
               ],
-            )
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Text('백업해놓은 폴더들을 포함하는 상위 폴더를 선택하세요.'),
+            Text("ex) '나무' 폴더 아래에 '즐겨찾기', '메모지' 등의 백업 폴더가 있는 경우, '나무' 폴더를 선택."),
           ],
         ),
       ),
