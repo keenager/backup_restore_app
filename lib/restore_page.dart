@@ -29,22 +29,22 @@ class _RestorePageState extends State<RestorePage> {
             SizedBox(
               height: 100,
             ),
-            Text('백업 폴더: ' + (backupStr == '' ? '없음' : backupStr)),
-            SizedBox(
-              height: 10,
-            ),
             ButtonBar(
               alignment: MainAxisAlignment.center,
               children: [
-                TextButton(
+                OutlinedButton(
                   child: Text('폴더 선택'),
                   onPressed: selectFolder,
                 ),
-                ElevatedButton(
-                  child: Text('복사'),
-                  onPressed: _restoreProcess,
-                ),
+                Text('백업 폴더: ' + (backupStr == '' ? '없음' : backupStr)),
               ],
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            ElevatedButton(
+              child: Text('내보내기(복원)'),
+              onPressed: _restoreProcess,
             ),
             SizedBox(
               height: 10,

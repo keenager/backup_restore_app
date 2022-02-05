@@ -37,7 +37,6 @@ class BackupPage extends StatelessWidget {
           Expanded(
             child: PickWidget(),
           ),
-          DeleteWidget(),
           AdditionalWidget(),
           CopyWidget(),
           Row(
@@ -199,41 +198,6 @@ class _PickWidgetState extends State<PickWidget> {
   }
 }
 
-class DeleteWidget extends StatefulWidget {
-  const DeleteWidget({Key? key}) : super(key: key);
-
-  @override
-  _DeleteWidgetState createState() => _DeleteWidgetState();
-}
-
-class _DeleteWidgetState extends State<DeleteWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(15.0),
-      child: Tooltip(
-        message: '삭제 후 우측 상단 새로고침 버튼을 누르면 결과를 확인할 수 있습니다.',
-        child: SizedBox(
-          width: 200,
-          child: Row(
-            children: [
-              Checkbox(
-                value: isDelChecked,
-                onChanged: (bool? value) {
-                  setState(() {
-                    isDelChecked = value!;
-                  });
-                },
-              ),
-              Text('백업 후 원본 삭제'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class AdditionalWidget extends StatelessWidget {
   const AdditionalWidget({Key? key}) : super(key: key);
 
@@ -251,17 +215,35 @@ class AdditionalWidget extends StatelessWidget {
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: Text('판결서 기재례와 인증서'),
+                    title: Text('판결서 주문/이유, 인증서'),
                     content: Text(
-                        "판결서 작성 관리 시스템에서 사용하던 '사용자 정의' 주문, 이유 기재례와 법원 인증서를 한 번에 내보내기 하는 기능을 해당 시스템에서 제공하고 있으므로, 이를 이용하시면 됩니다."),
+                        "'판결문 작성 관리 시스템' - [업무지원] - [인증서/주문/이유 내보내기] 메뉴를 이용하시면 됩니다."),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text('OK'),
+                      ),
+                    ],
                   );
                 },
               );
             },
           ),
           TextButton(
-            child: Text('판결서 상용구 & 법원 인증서'),
-            onPressed: () {},
+            child: Text('한글 사용자 정의 데이터 파일'),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text('한글 사용자 정의 데이터 파일'),
+                    content: Text("한글 프로그램 - 메뉴를 이용하시면 됩니다."),
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
@@ -316,23 +298,52 @@ class _CopyWidgetState extends State<CopyWidget> {
     src.copySync(path.join(dest.path, path.basename(src.path)));
   }
 
+  String backupButtonName = '가져오기(백업) & 원본 삭제';
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text('선택된 폴더: ' + destStr),
-        SizedBox(
-          height: 10,
-        ),
-        ButtonBar(
-          alignment: MainAxisAlignment.center,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextButton(
+            OutlinedButton(
               child: Text('폴더 선택'),
               onPressed: selectFolder,
             ),
+            SizedBox(width: 20),
+            Text('선택된 폴더: ' + destStr),
+          ],
+        ),
+        SizedBox(
+          height: 10,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Tooltip(
+              message: '삭제 후 우측 상단 새로고침 버튼을 누르면 결과를 확인할 수 있습니다.',
+              child: SizedBox(
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: isDelChecked,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          isDelChecked = value!;
+                          backupButtonName =
+                              isDelChecked ? '가져오기(백업) & 원본 삭제' : '가져오기(백업)';
+                        });
+                      },
+                    ),
+                    Text('백업 후 원본 삭제'),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(width: 20),
             ElevatedButton(
-              child: Text('가져오기(백업)'),
+              child: Text(backupButtonName),
               onPressed: _backupProcess,
             ),
           ],
