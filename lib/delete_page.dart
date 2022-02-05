@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
+import 'package:fluent_ui/fluent_ui.dart';
 import 'dart:io';
 import 'path_map.dart';
 
@@ -10,11 +11,14 @@ class DeletePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('해당 폴더를 열어 필요 없는 파일들을 삭제하세요.'),
+    return ScaffoldPage(
+      header: Center(
+        child: Text(
+          '해당 폴더를 열어 필요 없는 파일들을 삭제하세요.',
+          style: TextStyle(fontSize: 20),
+        ),
       ),
-      body: ListView.separated(
+      content: ListView.separated(
         itemCount: entryList.length,
         itemBuilder: (context, index) {
           return ListTile(
@@ -26,7 +30,10 @@ class DeletePage extends StatelessWidget {
                       onPressed: () {
                         Process.run('explorer', [entryList[index].value]);
                       },
-                      icon: Icon(Icons.open_in_browser),
+                      icon: Icon(
+                        FluentIcons.open_folder_horizontal,
+                        size: 20,
+                      ),
                     ),
                   )
                 : Text('Not found.'),

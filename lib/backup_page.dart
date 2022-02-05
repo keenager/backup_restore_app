@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
+import 'package:fluent_ui/fluent_ui.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+// import 'package:flutter/material.dart';
 import 'path_map.dart';
 import 'package:path/path.dart' as path;
 import 'common_func.dart';
@@ -15,42 +17,21 @@ class BackupPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text('가져오기'),
-        actions: [
-          Tooltip(
-            message: '다음 페이지로(삭제하기)',
-            child: IconButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/delete');
-              },
-              icon: Icon(Icons.arrow_forward),
-            ),
-          )
-        ],
+    return ScaffoldPage(
+      header: Center(
+        child: Text(
+          '가져오기',
+          style: TextStyle(fontSize: 20),
+        ),
       ),
-      body: Column(
+      content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: const [
           Expanded(
             child: PickWidget(),
           ),
           AdditionalWidget(),
           CopyWidget(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: Icon(Icons.arrow_forward),
-                tooltip: '다음 페이지로(삭제하기)',
-                onPressed: () {
-                  Navigator.pushNamed(context, '/delete');
-                },
-              ),
-            ],
-          ),
           SizedBox(
             height: 50,
           ),
@@ -130,7 +111,7 @@ class _PickWidgetState extends State<PickWidget> {
       children: [
         ListTile(
           leading: Checkbox(
-            value: isAllChecked,
+            checked: isAllChecked,
             onChanged: (bool? value) {
               setState(() {
                 isAllChecked = value!;
@@ -140,7 +121,7 @@ class _PickWidgetState extends State<PickWidget> {
           ),
           title: Text('전체 선택'),
           trailing: IconButton(
-            icon: Icon(Icons.refresh),
+            icon: Icon(FluentIcons.refresh),
             onPressed: () {
               setState(() {
                 isAllChecked = false;
@@ -149,14 +130,19 @@ class _PickWidgetState extends State<PickWidget> {
             },
           ),
         ),
-        Divider(color: Colors.black87),
+        Divider(
+          style: DividerThemeData(
+            decoration: BoxDecoration(color: Colors.black),
+          ),
+        ),
         Expanded(
           child: ListView.separated(
             itemCount: entryList.length,
             itemBuilder: (context, index) {
               return ListTile(
+                contentPadding: EdgeInsets.symmetric(vertical: 0),
                 leading: Checkbox(
-                  value: exist[index] ? isChecked[index] : false,
+                  checked: exist[index] ? isChecked[index] : false,
                   onChanged: (bool? value) {
                     setState(() {
                       isChecked[index] = value!;
@@ -167,8 +153,8 @@ class _PickWidgetState extends State<PickWidget> {
                 subtitle: Row(
                   children: [
                     exist[index] == true
-                        ? Icon(Icons.check_circle, color: Colors.green)
-                        : Icon(Icons.quiz_rounded),
+                        ? Icon(FluentIcons.check_mark, color: Colors.green)
+                        : Icon(FluentIcons.survey_questions),
                     SizedBox(
                       width: 10,
                     ),
@@ -182,10 +168,14 @@ class _PickWidgetState extends State<PickWidget> {
                     ? Tooltip(
                         message: '누르면 해당 폴더가 열립니다.',
                         child: IconButton(
-                            onPressed: () {
-                              Process.run('explorer', [entryList[index].value]);
-                            },
-                            icon: Icon(Icons.open_in_browser)),
+                          onPressed: () {
+                            Process.run('explorer', [entryList[index].value]);
+                          },
+                          icon: Icon(
+                            FluentIcons.open_folder_horizontal,
+                            size: 20,
+                          ),
+                        ),
                       )
                     : null,
               );
@@ -211,37 +201,21 @@ class AdditionalWidget extends StatelessWidget {
           TextButton(
             child: Text('판결서 주문, 이유 기재례 & 법원 인증서'),
             onPressed: () {
-              showDialog(
+              myDialog(
                 context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text('판결서 주문/이유, 인증서'),
-                    content: Text(
-                        "'판결문 작성 관리 시스템' - [업무지원] - [인증서/주문/이유 내보내기] 메뉴를 이용하시면 됩니다."),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text('OK'),
-                      ),
-                    ],
-                  );
-                },
+                title: '판결서 주문/이유, 인증서',
+                content:
+                    "'판결문 작성 관리 시스템' - [업무지원] - [인증서/주문/이유 내보내기] 메뉴를 이용하시면 됩니다.",
               );
             },
           ),
           TextButton(
             child: Text('한글 사용자 정의 데이터 파일'),
             onPressed: () {
-              showDialog(
+              myDialog(
                 context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text('한글 사용자 정의 데이터 파일'),
-                    content: Text("한글 프로그램 - 메뉴를 이용하시면 됩니다."),
-                  );
-                },
+                title: '한글 사용자 정의 데이터 파일',
+                content: "한글 프로그램 - 메뉴를 이용하시면 됩니다.",
               );
             },
           ),
@@ -262,7 +236,7 @@ class _CopyWidgetState extends State<CopyWidget> {
   String destStr = '없음';
   void _backupProcess() {
     if (destStr == '없음') {
-      showSnackBar(context, '백업 대상을 저장할 폴더를 선택하세요.');
+      showSnackbar(context, Snackbar(content: Text('백업 대상을 저장할 폴더를 선택하세요.')));
     } else {
       entryList.asMap().forEach((index, entry) {
         //백업 대상이 없거나 체크되지 않은 경우 스킵
@@ -327,7 +301,7 @@ class _CopyWidgetState extends State<CopyWidget> {
                 child: Row(
                   children: [
                     Checkbox(
-                      value: isDelChecked,
+                      checked: isDelChecked,
                       onChanged: (bool? value) {
                         setState(() {
                           isDelChecked = value!;
@@ -342,7 +316,7 @@ class _CopyWidgetState extends State<CopyWidget> {
               ),
             ),
             SizedBox(width: 20),
-            ElevatedButton(
+            FilledButton(
               child: Text(backupButtonName),
               onPressed: _backupProcess,
             ),

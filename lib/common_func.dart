@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:fluent_ui/fluent_ui.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
@@ -28,13 +28,26 @@ void copyFilesFolders(Directory src, Directory dest,
   }
 }
 
-void showSnackBar(BuildContext ctx, String str) {
-  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-    content: Text(
-      str,
-      textAlign: TextAlign.center,
-      style: TextStyle(),
-    ),
-    duration: Duration(seconds: 2),
-  ));
+void myDialog(
+    {required BuildContext context,
+    required String title,
+    required String content}) {
+  showDialog(
+    barrierDismissible: true,
+    context: context,
+    builder: (context) {
+      return ContentDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
 }
