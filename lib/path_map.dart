@@ -9,6 +9,7 @@ class Path {
     targetDirs = {
       'target1': r'C:\Users\' '$str' r'\Documents\aaa',
       'target2': r'C:\Users\' '$str' r'\Downloads\bbb',
+      '인터넷 익스플로러 즐겨찾기': r'C:\Users\' '$str' r'\Favorites',
       '엣지 즐겨찾기 파일': r'C:\Users\'
           '$str'
           r'\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks',

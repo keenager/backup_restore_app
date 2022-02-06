@@ -2,29 +2,49 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 
-void copyFilesFolders(Directory src, Directory dest,
-    {required String task, bool delete = false}) {
+void copyFilesFolders(
+    {required BuildContext context,
+    required Directory source,
+    required Directory destination,
+    required String task,
+    bool delete = false}) {
   try {
-    List<FileSystemEntity> srcList = src.listSync(recursive: false);
+    List<FileSystemEntity> srcList = source.listSync(recursive: false);
     for (var entity in srcList) {
       if (entity is Directory) {
         if (task == 'restore' &&
-            src.path.contains('메모지') &&
+            source.path.contains('메모지') &&
             entity.path.contains('임시')) {
-          copyFilesFolders(entity.absolute, dest, task: task);
+          copyFilesFolders(
+              context: context,
+              source: entity.absolute,
+              destination: destination,
+              task: task);
         } else {
           Directory newDir = Directory(
-              path.join(dest.absolute.path, path.basename(entity.path)));
+              path.join(destination.absolute.path, path.basename(entity.path)));
           newDir.createSync(recursive: true);
-          copyFilesFolders(entity.absolute, newDir, task: task, delete: delete);
+          copyFilesFolders(
+              context: context,
+              source: entity.absolute,
+              destination: newDir,
+              task: task,
+              delete: delete);
         }
       } else if (entity is File) {
-        entity.copySync(path.join(dest.path, path.basename(entity.path)));
+        entity
+            .copySync(path.join(destination.path, path.basename(entity.path)));
       }
       if (delete) entity.deleteSync();
     }
   } catch (e) {
-    print(e);
+    showSnackbar(
+      context,
+      Snackbar(
+        content: Text('에러가 생겼습니다. \n ${e.toString()}'),
+      ),
+      duration: Duration(seconds: 5),
+    );
   }
 }
 

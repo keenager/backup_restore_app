@@ -1,8 +1,6 @@
-// import 'package:flutter/material.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-// import 'package:flutter/material.dart';
 import 'path_map.dart';
 import 'package:path/path.dart' as path;
 import 'common_func.dart';
@@ -20,8 +18,8 @@ class BackupPage extends StatelessWidget {
     return ScaffoldPage(
       header: Center(
         child: Text(
-          '가져오기',
-          style: TextStyle(fontSize: 20),
+          '가져올 파일 또는 폴더를 선택한 뒤, 저장할 위치를 선택하세요.',
+          style: TextStyle(fontSize: 15),
         ),
       ),
       content: Column(
@@ -120,14 +118,15 @@ class _PickWidgetState extends State<PickWidget> {
             },
           ),
           title: Text('전체 선택'),
-          trailing: IconButton(
-            icon: Icon(FluentIcons.refresh),
-            onPressed: () {
-              setState(() {
+          trailing: Tooltip(
+            message: '새로고침',
+            child: IconButton(
+              icon: Icon(FluentIcons.refresh),
+              onPressed: () => setState(() {
                 isAllChecked = false;
                 toggleChecked(false);
-              });
-            },
+              }),
+            ),
           ),
         ),
         Divider(
@@ -140,7 +139,8 @@ class _PickWidgetState extends State<PickWidget> {
             itemCount: entryList.length,
             itemBuilder: (context, index) {
               return ListTile(
-                contentPadding: EdgeInsets.symmetric(vertical: 0),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 0, horizontal: 12),
                 leading: Checkbox(
                   checked: exist[index] ? isChecked[index] : false,
                   onChanged: (bool? value) {
@@ -153,8 +153,11 @@ class _PickWidgetState extends State<PickWidget> {
                 subtitle: Row(
                   children: [
                     exist[index] == true
-                        ? Icon(FluentIcons.check_mark, color: Colors.green)
-                        : Icon(FluentIcons.survey_questions),
+                        ? Icon(FluentIcons.completed_solid, color: Colors.green)
+                        : Icon(
+                            FluentIcons.status_circle_question_mark,
+                            size: 25,
+                          ),
                     SizedBox(
                       width: 10,
                     ),
@@ -214,8 +217,10 @@ class AdditionalWidget extends StatelessWidget {
             onPressed: () {
               myDialog(
                 context: context,
-                title: '한글 사용자 정의 데이터 파일',
-                content: "한글 프로그램 - 메뉴를 이용하시면 됩니다.",
+                title: '사용자가 정의한 "매크로, 상용구, 빠른 교정" 등의 데이터를 저장합니다.',
+                content: '''\u2460 [도구] - [환경 설정] - [파일] 탭 선택
+\u2461 [사용자 정의 데이터] 항목 내 [사용자 정의 데이터 저장하기] 클릭
+\u2462 사용자 정의 데이터가 "*.UDF" 파일 형식으로 지정한 위치에 저장됩니다.''',
               );
             },
           ),
@@ -253,8 +258,12 @@ class _CopyWidgetState extends State<CopyWidget> {
         } else {
           //대상이 디렉토리인 경우
           Directory srcDir = Directory(entry.value);
-          copyFilesFolders(srcDir, destDir,
-              task: 'backup', delete: isDelChecked);
+          copyFilesFolders(
+              context: context,
+              source: srcDir,
+              destination: destDir,
+              task: 'backup',
+              delete: isDelChecked);
         }
         //if (isDelChecked) Directory(entry.value).deleteSync();
       });

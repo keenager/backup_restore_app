@@ -21,13 +21,15 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => HomePage(),
-        '/backup': (context) => BackupPage(),
-        '/delete': (context) => DeletePage(),
-        '/restore': (context) => RestorePage(),
+        // '/backup': (context) => BackupPage(),
+        // '/delete': (context) => DeletePage(),
+        // '/restore': (context) => RestorePage(),
       },
     );
   }
 }
+
+final titleList = ['$userName님, 안녕하세요.', '가져오기(백업)', '삭제하기', '내보내기(복원)'];
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -42,7 +44,12 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return NavigationView(
       appBar: NavigationAppBar(
-        title: Text('$userName님, 안녕하세요.'),
+        title: Center(
+          child: Text(
+            titleList[index],
+            style: TextStyle(fontSize: 20),
+          ),
+        ),
       ),
       pane: NavigationPane(
         selected: index,
@@ -55,15 +62,15 @@ class _HomePageState extends State<HomePage> {
           ),
           PaneItem(
             icon: Icon(FluentIcons.download),
-            title: Text('가져오기(백업)'),
+            title: Text(titleList[1]),
           ),
           PaneItem(
             icon: Icon(FluentIcons.delete),
-            title: Text('삭제하기'),
+            title: Text(titleList[2]),
           ),
           PaneItem(
             icon: Icon(FluentIcons.upload),
-            title: Text('내보내기(복원)'),
+            title: Text(titleList[3]),
           ),
         ],
       ),
@@ -111,18 +118,30 @@ class InstructionPage extends StatelessWidget {
                   onPressed: () {
                     // Navigator.pushNamed(context, '/backup');
                   },
-                  child: Text(
-                    '가져오기(백업)',
-                    style: TextStyle(fontSize: 20),
+                  child: Row(
+                    children: [
+                      Icon(FluentIcons.download),
+                      SizedBox(width: 10),
+                      Text(
+                        titleList[1],
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ],
                   ),
                 ),
                 TextButton(
                   onPressed: () {
                     // Navigator.pushNamed(context, '/delete');
                   },
-                  child: Text(
-                    '삭제하기',
-                    style: TextStyle(fontSize: 20),
+                  child: Row(
+                    children: [
+                      Icon(FluentIcons.delete),
+                      SizedBox(width: 10),
+                      Text(
+                        titleList[2],
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -147,9 +166,15 @@ class InstructionPage extends StatelessWidget {
               onPressed: () {
                 // Navigator.pushNamed(context, '/restore');
               },
-              child: Text(
-                '내보내기(복원)',
-                style: TextStyle(fontSize: 20),
+              child: Row(
+                children: [
+                  Icon(FluentIcons.upload),
+                  SizedBox(width: 10),
+                  Text(
+                    titleList[3],
+                    style: TextStyle(fontSize: 20),
+                  ),
+                ],
               ),
             ),
           ],

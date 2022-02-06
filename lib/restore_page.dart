@@ -21,16 +21,14 @@ class _RestorePageState extends State<RestorePage> {
     return ScaffoldPage(
       header: Center(
         child: Text(
-          '내보내기',
+          '가져왔던 파일 또는 폴더들을 배치합니다.',
           style: TextStyle(fontSize: 20),
         ),
       ),
       content: Center(
         child: Column(
           children: [
-            SizedBox(
-              height: 100,
-            ),
+            SizedBox(height: 50),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -56,14 +54,17 @@ class _RestorePageState extends State<RestorePage> {
             ),
             Text('백업해놓은 폴더들을 포함하는 상위 폴더를 선택하세요.'),
             Text("ex) '나무' 폴더 아래에 '즐겨찾기', '메모지' 등의 백업 폴더가 있는 경우, '나무' 폴더를 선택."),
+            SizedBox(height: 20),
             TextButton(
               child: Text('메모지 복원 관련'),
               onPressed: () {
                 myDialog(
                     context: context,
                     title: '메모지 복원 경로',
-                    content:
-                        '모두 [사용자메모지] - [임시] 폴더로 복사됩니다. 복사한 뒤 메모지 프로그램을 실행하여 해당 부분 설명에 따라 메모지를 등록하시면 됩니다.');
+                    content: '백업해 둔 메모지 파일들은 모두 '
+                        r'[ C:\work\ps\mo\사용자메모지\임시 ] 폴더로 복사됩니다.'
+                        '\n'
+                        '복사한 뒤 메모지 프로그램을 실행하여 해당 부분 설명에 따라 메모지를 등록하시면 됩니다.');
               },
             ),
           ],
@@ -124,7 +125,11 @@ class _RestorePageState extends State<RestorePage> {
         //일반적인 경우
         Directory destDir = Directory(mapValue);
         destDir.createSync(recursive: true);
-        copyFilesFolders(srcDir, destDir, task: 'restore');
+        copyFilesFolders(
+            context: context,
+            source: srcDir,
+            destination: destDir,
+            task: 'restore');
       }
       showSnackbar(context, Snackbar(content: Text('복사 완료!')));
     }

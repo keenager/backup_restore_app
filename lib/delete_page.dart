@@ -1,4 +1,3 @@
-// import 'package:flutter/material.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'dart:io';
 import 'path_map.dart';
@@ -15,7 +14,7 @@ class DeletePage extends StatelessWidget {
       header: Center(
         child: Text(
           '해당 폴더를 열어 필요 없는 파일들을 삭제하세요.',
-          style: TextStyle(fontSize: 20),
+          style: TextStyle(fontSize: 15),
         ),
       ),
       content: ListView.separated(
