@@ -20,7 +20,10 @@ class Path {
       '문서 폴더(관리자 계정)': r'C:\Users\Administrator\Documents',
       '다운로드 폴더(내 계정)': r'C:\Users\' '$str' r'\Downloads',
       '다운로드 폴더(관리자 계정)': r'C:\Users\Administrator\Downloads',
-      '인증서': r'c:\GPKI',
+      '인증서': r'C:\GPKI',
+      '최근문서': r'C:\Users\' '$str' r'\AppData\Roaming\Microsoft\Windows\Recent',
+      '활동기록': 'ms-settings:privacy-activityhistory',
+      '휴지통': 'shell:RecycleBinFolder',
     };
   }
 }

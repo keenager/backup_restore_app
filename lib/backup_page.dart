@@ -19,7 +19,7 @@ class BackupPage extends StatelessWidget {
       header: Center(
         child: Text(
           '가져올 파일 또는 폴더를 선택한 뒤, 저장할 위치를 선택하세요.',
-          style: TextStyle(fontSize: 15),
+          style: TextStyle(fontSize: 17),
         ),
       ),
       content: Column(
@@ -154,16 +154,18 @@ class _PickWidgetState extends State<PickWidget> {
                   children: [
                     exist[index] == true
                         ? Icon(FluentIcons.completed_solid, color: Colors.green)
-                        : Icon(
-                            FluentIcons.status_circle_question_mark,
-                            size: 25,
-                          ),
+                        : Icon(FluentIcons.unknown),
                     SizedBox(
                       width: 10,
                     ),
-                    Text(entryList[index].value +
-                        '\n' +
-                        '폴더: ${dirCntList[index]}개, 파일: ${fileCntList[index]}개, 크기: ${convertSize(fileSizeList[index])}'),
+                    Flexible(
+                      child: Text(
+                        entryList[index].value +
+                            '\n' +
+                            '폴더: ${dirCntList[index]}개, 파일: ${fileCntList[index]}개, 크기: ${convertSize(fileSizeList[index])}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
                 isThreeLine: true,

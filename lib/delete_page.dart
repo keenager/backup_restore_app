@@ -14,7 +14,7 @@ class DeletePage extends StatelessWidget {
       header: Center(
         child: Text(
           '해당 폴더를 열어 필요 없는 파일들을 삭제하세요.',
-          style: TextStyle(fontSize: 15),
+          style: TextStyle(fontSize: 17),
         ),
       ),
       content: ListView.separated(
@@ -22,7 +22,10 @@ class DeletePage extends StatelessWidget {
         itemBuilder: (context, index) {
           return ListTile(
             title: Text(entryList[index].key),
-            trailing: Directory(entryList[index].value).existsSync()
+            trailing: Directory(entryList[index].value).existsSync() ||
+                    entryList[index].key == '최근문서' ||
+                    entryList[index].key == '활동기록' ||
+                    entryList[index].key == '휴지통'
                 ? Tooltip(
                     message: '누르면 해당 폴더가 열립니다.',
                     child: IconButton(

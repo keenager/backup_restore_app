@@ -1,10 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_test_app/backup_page.dart';
-import 'package:flutter_test_app/restore_page.dart';
-import 'package:flutter_test_app/delete_page.dart';
+import 'backup_page.dart';
+import 'restore_page.dart';
+import 'delete_page.dart';
 import 'path_map.dart';
-
-// 개별 삭제 기능 구현(완료)     앱 아이콘
 
 void main() {
   runApp(const MyApp());
@@ -54,7 +52,7 @@ class _HomePageState extends State<HomePage> {
       pane: NavigationPane(
         selected: index,
         onChanged: (i) => setState(() => index = i),
-        header: FlutterLogo(),
+        header: Text('      메뉴'),
         items: [
           PaneItem(
             icon: Icon(FluentIcons.info),

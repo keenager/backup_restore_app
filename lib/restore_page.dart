@@ -22,13 +22,16 @@ class _RestorePageState extends State<RestorePage> {
       header: Center(
         child: Text(
           '가져왔던 파일 또는 폴더들을 배치합니다.',
-          style: TextStyle(fontSize: 20),
+          style: TextStyle(fontSize: 17),
         ),
       ),
       content: Center(
         child: Column(
           children: [
             SizedBox(height: 50),
+            Text('백업해놓은 폴더들을 포함하는 상위 폴더를 선택하세요.'),
+            Text("ex) '나무' 폴더 아래에 '즐겨찾기', '메모지' 등의 백업 폴더가 있는 경우, '나무' 폴더를 선택."),
+            SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -52,9 +55,6 @@ class _RestorePageState extends State<RestorePage> {
             SizedBox(
               height: 20,
             ),
-            Text('백업해놓은 폴더들을 포함하는 상위 폴더를 선택하세요.'),
-            Text("ex) '나무' 폴더 아래에 '즐겨찾기', '메모지' 등의 백업 폴더가 있는 경우, '나무' 폴더를 선택."),
-            SizedBox(height: 20),
             TextButton(
               child: Text('메모지 복원 관련'),
               onPressed: () {
