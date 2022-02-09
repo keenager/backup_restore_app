@@ -36,6 +36,7 @@ dependencies:
   # cupertino_icons: ^1.0.2
   file_picker: ^4.3.0
   fluent_ui: ^3.8.0
+  shared_preferences: ^2.0.13
 
 dev_dependencies:
   flutter_test:
@@ -47,7 +48,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^1.0.0
-  msix: ^2.8.15
+  # msix: ^2.8.15
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -90,10 +91,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
-msix_config:
-  display_name: Backup App
-  publisher_display_name: JYS
-  identity_name: My.flutter.BackupApp
-  msix_version: 1.0.0.0
-  logo_path: windows\runner\resources\app_icon.ico
-  output_name: BackupApp_install
+# msix_config:
+#   display_name: Backup App
+#   publisher_display_name: JYS
+#   identity_name: My.flutter.BackupApp
+#   msix_version: 1.0.0.0
+#   logo_path: windows\runner\resources\app_icon.ico
+#   output_name: BackupApp_install

@@ -5,9 +5,10 @@ import 'path_map.dart';
 import 'package:path/path.dart' as path;
 import 'common_func.dart';
 
-final List entryList = targetDirs.entries.toList();
-List<bool> exist = List<bool>.generate(targetDirs.length, (int i) => false);
-List<bool> isChecked = List<bool>.generate(targetDirs.length, (int i) => false);
+// final List entryList = targetDirs.entries.toList();
+late List<bool> exist;
+late List<bool> isChecked;
+late Map<String, String> targetMap;
 bool isDelChecked = true;
 
 class BackupPage extends StatelessWidget {
@@ -22,18 +23,38 @@ class BackupPage extends StatelessWidget {
           style: TextStyle(fontSize: 17),
         ),
       ),
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Expanded(
-            child: PickWidget(),
-          ),
-          AdditionalWidget(),
-          CopyWidget(),
-          SizedBox(
-            height: 50,
-          ),
-        ],
+      content: FutureBuilder(
+        future: targetDirs,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return ProgressBar();
+            default:
+              if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else {
+                targetMap = snapshot.data;
+                exist =
+                    List<bool>.generate(snapshot.data.length, (int i) => false);
+                isChecked =
+                    List<bool>.generate(snapshot.data.length, (int i) => true);
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Expanded(
+                      child: PickWidget(),
+                    ),
+                    AdditionalWidget(),
+                    CopyWidget(),
+                    SizedBox(
+                      height: 50,
+                    ),
+                  ],
+                );
+              }
+          }
+        },
       ),
     );
   }
@@ -47,17 +68,27 @@ class PickWidget extends StatefulWidget {
 }
 
 class _PickWidgetState extends State<PickWidget> {
-  bool isAllChecked = false;
+  bool isAllChecked = true;
 
   @override
   Widget build(BuildContext context) {
+    String convertSize(int byte) {
+      if (byte < 52) {
+        return byte.toString() + 'byte';
+      } else if (byte < 52429) {
+        return '약 ' + (byte / 1024).toStringAsFixed(1) + 'KB';
+      } else {
+        return '약 ' + (byte / 1048576).toStringAsFixed(1) + 'MB';
+      }
+    }
+
     List<int> dirCntList = [];
     List<int> fileCntList = [];
     List<int> fileSizeList = [];
-
-    entryList.asMap().forEach((index, entry) {
-      File f = File(entry.value);
-      Directory d = Directory(entry.value);
+    int index = 0;
+    targetMap.forEach((key, value) {
+      File f = File(value);
+      Directory d = Directory(value);
 
       if (f.existsSync()) {
         // 타겟과 일치하는 파일이 있는 경우
@@ -88,21 +119,11 @@ class _PickWidgetState extends State<PickWidget> {
         fileSizeList.add(0);
         exist[index] = false;
       }
+      index++;
     });
-
     void toggleChecked(bool value) {
-      isChecked.replaceRange(0, targetDirs.length,
-          List<bool>.generate(targetDirs.length, (int i) => value));
-    }
-
-    String convertSize(int byte) {
-      if (byte < 52) {
-        return byte.toString() + 'byte';
-      } else if (byte < 52429) {
-        return '약 ' + (byte / 1024).toStringAsFixed(1) + 'KB';
-      } else {
-        return '약 ' + (byte / 1048576).toStringAsFixed(1) + 'MB';
-      }
+      isChecked.replaceRange(0, targetMap.length,
+          List<bool>.generate(targetMap.length, (int i) => value));
     }
 
     return Column(
@@ -136,8 +157,9 @@ class _PickWidgetState extends State<PickWidget> {
         ),
         Expanded(
           child: ListView.separated(
-            itemCount: entryList.length,
+            itemCount: targetMap.length,
             itemBuilder: (context, index) {
+              List entryList = targetMap.entries.toList();
               return ListTile(
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 0, horizontal: 12),
@@ -241,25 +263,27 @@ class CopyWidget extends StatefulWidget {
 
 class _CopyWidgetState extends State<CopyWidget> {
   String destStr = '없음';
-  void _backupProcess() {
+
+  void _backupProcess(Map<String, String> dirs) {
     if (destStr == '없음') {
       showSnackbar(context, Snackbar(content: Text('백업 대상을 저장할 폴더를 선택하세요.')));
     } else {
-      entryList.asMap().forEach((index, entry) {
+      int index = 0;
+      dirs.forEach((key, value) {
         //백업 대상이 없거나 체크되지 않은 경우 스킵
         if (!exist[index] || !isChecked[index]) {
           return;
         }
         //key 이름으로 하위 폴더 생성
-        Directory destDir = Directory(path.join(destStr, entry.key));
+        Directory destDir = Directory(path.join(destStr, key));
         destDir.createSync(recursive: true);
         //대상이 특정 파일 하나인 경우
-        if (FileSystemEntity.isFileSync(entry.value)) {
-          copyFile(File(entry.value), destDir);
-          File(entry.value).deleteSync(recursive: true);
+        if (FileSystemEntity.isFileSync(value)) {
+          copyFile(File(value), destDir);
+          File(value).deleteSync(recursive: true);
         } else {
           //대상이 디렉토리인 경우
-          Directory srcDir = Directory(entry.value);
+          Directory srcDir = Directory(value);
           copyFilesFolders(
               context: context,
               source: srcDir,
@@ -268,6 +292,7 @@ class _CopyWidgetState extends State<CopyWidget> {
               delete: isDelChecked);
         }
         //if (isDelChecked) Directory(entry.value).deleteSync();
+        index++;
       });
       Process.run('explorer', [destStr]);
     }
@@ -321,7 +346,7 @@ class _CopyWidgetState extends State<CopyWidget> {
                         });
                       },
                     ),
-                    Text('백업 후 원본 삭제'),
+                    Text('원본 삭제 여부'),
                   ],
                 ),
               ),
@@ -329,7 +354,9 @@ class _CopyWidgetState extends State<CopyWidget> {
             SizedBox(width: 20),
             FilledButton(
               child: Text(backupButtonName),
-              onPressed: _backupProcess,
+              onPressed: () {
+                _backupProcess(targetMap);
+              },
             ),
           ],
         ),

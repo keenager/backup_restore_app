@@ -1,3 +1,4 @@
+import 'package:backup_restore_app/setting_page.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'backup_page.dart';
 import 'restore_page.dart';
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-final titleList = ['$userName님, 안녕하세요.', '가져오기(백업)', '삭제하기', '내보내기(복원)'];
+final titleList = ['$userName님, 안녕하세요.', '가져오기(백업)', '삭제하기', '내보내기(복원)', '설정'];
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -70,6 +71,10 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(FluentIcons.upload),
             title: Text(titleList[3]),
           ),
+          PaneItem(
+            icon: Icon(FluentIcons.settings),
+            title: Text(titleList[4]),
+          ),
         ],
       ),
       content: NavigationBody(
@@ -79,6 +84,7 @@ class _HomePageState extends State<HomePage> {
           BackupPage(),
           DeletePage(),
           RestorePage(),
+          SettingPage(),
         ],
       ),
     );

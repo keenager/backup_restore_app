@@ -1,12 +1,23 @@
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Path {
   late Map<String, String> targetDirs;
+  late Map<String, String> defaultTargetDirs;
   late Map<String, String> deleteDirs;
 
   // *백업 대상이 파일인 경우 key에 '파일'을 포함시켜야 함*
   Path(String str) {
     targetDirs = {
+      'target1': r'C:\Users\' '$str' r'\Documents\aaa',
+      'target2': r'C:\Users\' '$str' r'\Downloads\bbb',
+      '인터넷 익스플로러 즐겨찾기': r'C:\Users\' '$str' r'\Favorites',
+      '엣지 즐겨찾기 파일': r'C:\Users\'
+          '$str'
+          r'\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks',
+      '메모지': r'C:\work\ps\mo\사용자메모지',
+    };
+    defaultTargetDirs = {
       'target1': r'C:\Users\' '$str' r'\Documents\aaa',
       'target2': r'C:\Users\' '$str' r'\Downloads\bbb',
       '인터넷 익스플로러 즐겨찾기': r'C:\Users\' '$str' r'\Favorites',
@@ -29,4 +40,23 @@ class Path {
 }
 
 final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
-final Map<String, String> targetDirs = Path(userName).targetDirs;
+Map<String, String> defaultTargetDirs = Path(userName).defaultTargetDirs;
+Map<String, String> customTargetDirs = Path(userName).defaultTargetDirs;
+
+final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
+
+Future<Map<String, String>> getFinalTargetDirs() async {
+  final _prefs = await prefs;
+
+  final Set<String> keys = _prefs.getKeys();
+  final Map<String, String> tempMap = {};
+  for (final key in keys) {
+    tempMap[key] = _prefs.getString(key) ?? '';
+  }
+  customTargetDirs.addAll(tempMap);
+  return customTargetDirs;
+}
+
+Future<Map<String, String>> targetDirs = getFinalTargetDirs();
+
+//prefs 저장위치: C:\Users\KEENAGER\AppData\Roaming\com.example\backup_restore_app\shared_preferences.json
