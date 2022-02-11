@@ -16,6 +16,7 @@ class Path {
           '$str'
           r'\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks',
       '메모지': r'C:\work\ps\mo\사용자메모지',
+      '외부망에서 받은 자료': r'C:\인터넷 자료수신',
     };
     defaultTargetDirs = {
       'target1': r'C:\Users\' '$str' r'\Documents\aaa',
@@ -25,6 +26,7 @@ class Path {
           '$str'
           r'\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks',
       '메모지': r'C:\work\ps\mo\사용자메모지',
+      '외부망에서 받은 자료': r'C:\인터넷 자료수신',
     };
     deleteDirs = {
       '문서 폴더(내 계정)': r'C:\Users\' '$str' r'\Documents',
@@ -41,7 +43,6 @@ class Path {
 
 final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
 Map<String, String> defaultTargetDirs = Path(userName).defaultTargetDirs;
-Map<String, String> customTargetDirs = Path(userName).defaultTargetDirs;
 
 final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
 
@@ -53,10 +54,14 @@ Future<Map<String, String>> getFinalTargetDirs() async {
   for (final key in keys) {
     tempMap[key] = _prefs.getString(key) ?? '';
   }
+  Map<String, String> customTargetDirs = Path(userName).defaultTargetDirs;
   customTargetDirs.addAll(tempMap);
   return customTargetDirs;
 }
 
 Future<Map<String, String>> targetDirs = getFinalTargetDirs();
 
-//prefs 저장위치: C:\Users\KEENAGER\AppData\Roaming\com.example\backup_restore_app\shared_preferences.json
+//prefs 저장위치
+String prefsPath = r'C:\Users\' +
+    userName +
+    r'\AppData\Roaming\com.example\backup_restore_app\shared_preferences.json';

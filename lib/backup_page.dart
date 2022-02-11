@@ -1,11 +1,11 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'dart:io';
+import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'path_map.dart';
 import 'package:path/path.dart' as path;
 import 'common_func.dart';
 
-// final List entryList = targetDirs.entries.toList();
 late List<bool> exist;
 late List<bool> isChecked;
 late Map<String, String> targetMap;
@@ -82,49 +82,75 @@ class _PickWidgetState extends State<PickWidget> {
       }
     }
 
-    List<int> dirCntList = [];
-    List<int> fileCntList = [];
-    List<int> fileSizeList = [];
-    int index = 0;
-    targetMap.forEach((key, value) {
-      File f = File(value);
-      Directory d = Directory(value);
+    List<int> dirCntList = List<int>.generate(targetMap.length, (int i) => 0);
+    List<int> fileCntList = List<int>.generate(targetMap.length, (int i) => 0);
+    List<int> fileSizeList = List<int>.generate(targetMap.length, (int i) => 0);
 
-      if (f.existsSync()) {
-        // 타겟과 일치하는 파일이 있는 경우
-        dirCntList.add(0);
-        fileCntList.add(1);
-        fileSizeList.add(f.lengthSync());
-        exist[index] = true;
-      } else if (d.existsSync()) {
-        // 타겟과 일치하는 디렉토리가 있는 경우
-        int fileCnt = 0, dirCnt = 0, size = 0;
-        List<FileSystemEntity> entities = d.listSync(recursive: true);
-        for (final entity in entities) {
-          if (entity is File) {
-            fileCnt++;
-            size += entity.lengthSync();
-          } else if (entity is Directory) {
-            dirCnt++;
-          }
-        }
-        dirCntList.add(dirCnt);
-        fileCntList.add(fileCnt);
-        fileSizeList.add(size);
-        exist[index] = size > 0 ? true : false;
-      } else {
-        // 타겟이 없는 경우
-        dirCntList.add(0);
-        fileCntList.add(0);
-        fileSizeList.add(0);
-        exist[index] = false;
-      }
-      index++;
-    });
+    // dirs.forEach((key, value) {
+    //   File f = File(value);
+    //   Directory d = Directory(value);
+
+    //   if (f.existsSync()) {
+    //     // 타겟과 일치하는 파일이 있는 경우
+    //     dirCntList.add(0);
+    //     fileCntList.add(1);
+    //     fileSizeList.add(f.lengthSync());
+    //     exist[index] = true;
+    //   } else if (d.existsSync()) {
+    //     // 타겟과 일치하는 디렉토리가 있는 경우
+    //     int fileCnt = 0, dirCnt = 0, size = 0;
+    //     List<FileSystemEntity> entities = d.listSync(recursive: true);
+    //     for (final entity in entities) {
+    //       if (entity is File) {
+    //         fileCnt++;
+    //         size += entity.lengthSync();
+    //       } else if (entity is Directory) {
+    //         dirCnt++;
+    //       }
+    //     }
+    //     dirCntList.add(dirCnt);
+    //     fileCntList.add(fileCnt);
+    //     fileSizeList.add(size);
+    //     exist[index] = size > 0 ? true : false;
+    //   } else {
+    //     // 타겟이 없는 경우
+    //     dirCntList.add(0);
+    //     fileCntList.add(0);
+    //     fileSizeList.add(0);
+    //     exist[index] = false;
+    //   }
+    //   index++;
+    // });
+
     void toggleChecked(bool value) {
       isChecked.replaceRange(0, targetMap.length,
           List<bool>.generate(targetMap.length, (int i) => value));
     }
+
+    Future<Map<String, dynamic>> dirContents(Directory dir) {
+      Map<String, dynamic> contentsMap = {
+        'entityList': [],
+        'dirCnt': 0,
+        'fileCnt': 0,
+        'size': 0,
+      };
+      Completer<Map<String, dynamic>> completer = Completer();
+      dir.list(recursive: true).listen(
+        (event) {
+          contentsMap['entityList'].add(event);
+          if (event is Directory) {
+            contentsMap['dirCnt']++;
+          } else if (event is File) {
+            contentsMap['fileCnt']++;
+            contentsMap['size'] += event.lengthSync();
+          }
+        },
+        onError: (e) => contentsMap['entityList'].add(e.toString()),
+        onDone: () => completer.complete(contentsMap),
+      );
+      return completer.future;
+    }
+    // getContents(targetMap);
 
     return Column(
       children: [
@@ -160,6 +186,9 @@ class _PickWidgetState extends State<PickWidget> {
             itemCount: targetMap.length,
             itemBuilder: (context, index) {
               List entryList = targetMap.entries.toList();
+              File f = File(entryList[index].value);
+              Directory d = Directory(entryList[index].value);
+              if (f.existsSync() || d.existsSync()) exist[index] = true;
               return ListTile(
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 0, horizontal: 12),
@@ -180,14 +209,92 @@ class _PickWidgetState extends State<PickWidget> {
                     SizedBox(
                       width: 10,
                     ),
-                    Flexible(
-                      child: Text(
-                        entryList[index].value +
-                            '\n' +
-                            '폴더: ${dirCntList[index]}개, 파일: ${fileCntList[index]}개, 크기: ${convertSize(fileSizeList[index])}',
+                    if (f.existsSync()) ...[
+                      Flexible(
+                        child: FutureBuilder(
+                          future: f.length(),
+                          builder:
+                              (BuildContext context, AsyncSnapshot snapshot) {
+                            switch (snapshot.connectionState) {
+                              case ConnectionState.waiting:
+                                return ProgressBar();
+                              default:
+                                if (snapshot.hasError) {
+                                  showSnackbar(
+                                    context,
+                                    Snackbar(
+                                        content:
+                                            Text(snapshot.error.toString())),
+                                    duration: Duration(seconds: 5),
+                                  );
+                                  return Text(snapshot.error.toString());
+                                } else {
+                                  dirCntList[index] = 0;
+                                  fileCntList[index] = 1;
+                                  fileSizeList[index] =
+                                      int.parse(snapshot.data!.toString());
+                                  exist[index] = true;
+                                  return Text(
+                                    entryList[index].value +
+                                        '\n' +
+                                        '폴더: ${dirCntList[index]}개, 파일: ${fileCntList[index]}개, 크기: ${convertSize(fileSizeList[index])}',
+                                    overflow: TextOverflow.ellipsis,
+                                  );
+                                }
+                            }
+                          },
+                        ),
+                      ),
+                    ] else if (d.existsSync()) ...[
+                      Flexible(
+                        child: FutureBuilder(
+                            future: dirContents(d),
+                            builder:
+                                (BuildContext context, AsyncSnapshot snapshot) {
+                              switch (snapshot.connectionState) {
+                                case ConnectionState.waiting:
+                                  return ProgressBar();
+                                default:
+                                  if (snapshot.hasError) {
+                                    showSnackbar(
+                                      context,
+                                      Snackbar(
+                                          content:
+                                              Text(snapshot.error.toString())),
+                                      duration: Duration(seconds: 5),
+                                    );
+                                    return Text(snapshot.error.toString());
+                                  } else {
+                                    // int fileCnt = 0, dirCnt = 0, size = 0;
+                                    // if (snapshot.data is File) {
+                                    //   fileCnt++;
+                                    //   size += snapshot.data;
+                                    // } else if (entity is Directory) {
+                                    //   dirCnt++;
+                                    // }
+                                    Map<String, dynamic> result = snapshot.data;
+
+                                    // dirCntList.add(result['dirCnt']);
+                                    // fileCntList.add(result['fileCnt']);
+                                    // fileSizeList.add(result['size']);
+                                    exist[index] =
+                                        result['size'] > 0 ? true : false;
+                                    return Text(
+                                      entryList[index].value +
+                                          '\n' +
+                                          '폴더: ${result['dirCnt']}개, 파일: ${result['fileCnt']}개, 크기: ${convertSize(result['size'])}',
+                                      overflow: TextOverflow.ellipsis,
+                                    );
+                                  }
+                              }
+                            }),
+                      ),
+                    ] else ...[
+                      Text(
+                        entryList[index].value + '\n' + 'Not Found',
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
+                    ]
                   ],
                 ),
                 isThreeLine: true,
@@ -237,14 +344,14 @@ class AdditionalWidget extends StatelessWidget {
             },
           ),
           TextButton(
-            child: Text('한글 사용자 정의 데이터 파일'),
+            child: Text('한컴오피스 NEO 한글, 사용자 정의 데이터 파일'),
             onPressed: () {
               myDialog(
                 context: context,
                 title: '사용자가 정의한 "매크로, 상용구, 빠른 교정" 등의 데이터를 저장합니다.',
                 content: '''\u2460 [도구] - [환경 설정] - [파일] 탭 선택
 \u2461 [사용자 정의 데이터] 항목 내 [사용자 정의 데이터 저장하기] 클릭
-\u2462 사용자 정의 데이터가 "*.UDF" 파일 형식으로 지정한 위치에 저장됩니다.''',
+\u2462 사용자 정의 데이터가 <*.UDF> 파일 형식으로 지정한 위치에 저장됩니다.''',
               );
             },
           ),
@@ -265,13 +372,16 @@ class _CopyWidgetState extends State<CopyWidget> {
   String destStr = '없음';
 
   void _backupProcess(Map<String, String> dirs) {
-    if (destStr == '없음') {
+    if (!isChecked.contains(true)) {
+      showSnackbar(context, Snackbar(content: Text('백업 대상을 하나 이상 선택하세요.')));
+    } else if (destStr == '없음') {
       showSnackbar(context, Snackbar(content: Text('백업 대상을 저장할 폴더를 선택하세요.')));
     } else {
       int index = 0;
       dirs.forEach((key, value) {
         //백업 대상이 없거나 체크되지 않은 경우 스킵
         if (!exist[index] || !isChecked[index]) {
+          index++;
           return;
         }
         //key 이름으로 하위 폴더 생성
@@ -294,6 +404,7 @@ class _CopyWidgetState extends State<CopyWidget> {
         //if (isDelChecked) Directory(entry.value).deleteSync();
         index++;
       });
+      copyFile(File(prefsPath), Directory(destStr));
       Process.run('explorer', [destStr]);
     }
   }

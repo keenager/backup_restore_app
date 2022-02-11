@@ -47,6 +47,19 @@ class _SettingPageState extends State<SettingPage> {
                           itemBuilder: (context, index) {
                             return ListTile(
                               title: Text(entryList[index].key),
+                              trailing: defaultTargetDirs
+                                      .containsKey(entryList[index].key)
+                                  ? null
+                                  : IconButton(
+                                      icon: Icon(FluentIcons.delete),
+                                      onPressed: () async {
+                                        final _prefs = await prefs;
+                                        await _prefs
+                                            .remove(entryList[index].key);
+                                        targetDirs = getFinalTargetDirs();
+                                        setState(() {});
+                                      },
+                                    ),
                             );
                           },
                           separatorBuilder: (context, index) => Divider(),
@@ -91,7 +104,7 @@ class _SettingPageState extends State<SettingPage> {
                   onPressed: () async {
                     final _prefs = await prefs;
                     await _prefs.setString(inputController.text, selectedPath);
-                    getFinalTargetDirs();
+                    targetDirs = getFinalTargetDirs();
                     setState(() {});
                   }),
             ],
