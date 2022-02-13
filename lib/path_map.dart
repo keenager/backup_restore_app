@@ -9,8 +9,6 @@ class Path {
   // *백업 대상이 파일인 경우 key에 '파일'을 포함시켜야 함*
   Path(String str) {
     targetDirs = {
-      'target1': r'C:\Users\' '$str' r'\Documents\aaa',
-      'target2': r'C:\Users\' '$str' r'\Downloads\bbb',
       '인터넷 익스플로러 즐겨찾기': r'C:\Users\' '$str' r'\Favorites',
       '엣지 즐겨찾기 파일': r'C:\Users\'
           '$str'
@@ -19,8 +17,6 @@ class Path {
       '외부망에서 받은 자료': r'C:\인터넷 자료수신',
     };
     defaultTargetDirs = {
-      'target1': r'C:\Users\' '$str' r'\Documents\aaa',
-      'target2': r'C:\Users\' '$str' r'\Downloads\bbb',
       '인터넷 익스플로러 즐겨찾기': r'C:\Users\' '$str' r'\Favorites',
       '엣지 즐겨찾기 파일': r'C:\Users\'
           '$str'
@@ -44,10 +40,10 @@ class Path {
 final String userName = Platform.environment['username'] ?? '사용자 확인 불가';
 Map<String, String> defaultTargetDirs = Path(userName).defaultTargetDirs;
 
-final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
-
 Future<Map<String, String>> getFinalTargetDirs() async {
+  final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
   final _prefs = await prefs;
+  await _prefs.reload();
 
   final Set<String> keys = _prefs.getKeys();
   final Map<String, String> tempMap = {};
@@ -59,9 +55,7 @@ Future<Map<String, String>> getFinalTargetDirs() async {
   return customTargetDirs;
 }
 
-Future<Map<String, String>> targetDirs = getFinalTargetDirs();
-
 //prefs 저장위치
 String prefsPath = r'C:\Users\' +
     userName +
-    r'\AppData\Roaming\com.example\backup_restore_app\shared_preferences.json';
+    r'\AppData\Roaming\RedTraining\backup_restore_app\shared_preferences.json';

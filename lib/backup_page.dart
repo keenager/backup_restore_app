@@ -8,7 +8,7 @@ import 'common_func.dart';
 
 late List<bool> exist;
 late List<bool> isChecked;
-late Map<String, String> targetMap;
+late Map<String, String> _targetMap;
 bool isDelChecked = true;
 
 class BackupPage extends StatelessWidget {
@@ -24,7 +24,7 @@ class BackupPage extends StatelessWidget {
         ),
       ),
       content: FutureBuilder(
-        future: targetDirs,
+        future: getFinalTargetDirs(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
@@ -33,7 +33,7 @@ class BackupPage extends StatelessWidget {
               if (snapshot.hasError) {
                 return Text('Error: ${snapshot.error}');
               } else {
-                targetMap = snapshot.data;
+                _targetMap = snapshot.data;
                 exist =
                     List<bool>.generate(snapshot.data.length, (int i) => false);
                 isChecked =
@@ -82,49 +82,9 @@ class _PickWidgetState extends State<PickWidget> {
       }
     }
 
-    List<int> dirCntList = List<int>.generate(targetMap.length, (int i) => 0);
-    List<int> fileCntList = List<int>.generate(targetMap.length, (int i) => 0);
-    List<int> fileSizeList = List<int>.generate(targetMap.length, (int i) => 0);
-
-    // dirs.forEach((key, value) {
-    //   File f = File(value);
-    //   Directory d = Directory(value);
-
-    //   if (f.existsSync()) {
-    //     // 타겟과 일치하는 파일이 있는 경우
-    //     dirCntList.add(0);
-    //     fileCntList.add(1);
-    //     fileSizeList.add(f.lengthSync());
-    //     exist[index] = true;
-    //   } else if (d.existsSync()) {
-    //     // 타겟과 일치하는 디렉토리가 있는 경우
-    //     int fileCnt = 0, dirCnt = 0, size = 0;
-    //     List<FileSystemEntity> entities = d.listSync(recursive: true);
-    //     for (final entity in entities) {
-    //       if (entity is File) {
-    //         fileCnt++;
-    //         size += entity.lengthSync();
-    //       } else if (entity is Directory) {
-    //         dirCnt++;
-    //       }
-    //     }
-    //     dirCntList.add(dirCnt);
-    //     fileCntList.add(fileCnt);
-    //     fileSizeList.add(size);
-    //     exist[index] = size > 0 ? true : false;
-    //   } else {
-    //     // 타겟이 없는 경우
-    //     dirCntList.add(0);
-    //     fileCntList.add(0);
-    //     fileSizeList.add(0);
-    //     exist[index] = false;
-    //   }
-    //   index++;
-    // });
-
     void toggleChecked(bool value) {
-      isChecked.replaceRange(0, targetMap.length,
-          List<bool>.generate(targetMap.length, (int i) => value));
+      isChecked.replaceRange(0, _targetMap.length,
+          List<bool>.generate(_targetMap.length, (int i) => value));
     }
 
     Future<Map<String, dynamic>> dirContents(Directory dir) {
@@ -150,7 +110,6 @@ class _PickWidgetState extends State<PickWidget> {
       );
       return completer.future;
     }
-    // getContents(targetMap);
 
     return Column(
       children: [
@@ -169,10 +128,12 @@ class _PickWidgetState extends State<PickWidget> {
             message: '새로고침',
             child: IconButton(
               icon: Icon(FluentIcons.refresh),
-              onPressed: () => setState(() {
+              onPressed: () async {
+                await getFinalTargetDirs();
                 isAllChecked = false;
                 toggleChecked(false);
-              }),
+                setState(() {});
+              },
             ),
           ),
         ),
@@ -183,9 +144,9 @@ class _PickWidgetState extends State<PickWidget> {
         ),
         Expanded(
           child: ListView.separated(
-            itemCount: targetMap.length,
+            itemCount: _targetMap.length,
             itemBuilder: (context, index) {
-              List entryList = targetMap.entries.toList();
+              List entryList = _targetMap.entries.toList();
               File f = File(entryList[index].value);
               Directory d = Directory(entryList[index].value);
               if (f.existsSync() || d.existsSync()) exist[index] = true;
@@ -229,15 +190,13 @@ class _PickWidgetState extends State<PickWidget> {
                                   );
                                   return Text(snapshot.error.toString());
                                 } else {
-                                  dirCntList[index] = 0;
-                                  fileCntList[index] = 1;
-                                  fileSizeList[index] =
+                                  int fileSize =
                                       int.parse(snapshot.data!.toString());
                                   exist[index] = true;
                                   return Text(
                                     entryList[index].value +
                                         '\n' +
-                                        '폴더: ${dirCntList[index]}개, 파일: ${fileCntList[index]}개, 크기: ${convertSize(fileSizeList[index])}',
+                                        '폴더: 0개, 파일: 1개, 크기: ${convertSize(fileSize)}',
                                     overflow: TextOverflow.ellipsis,
                                   );
                                 }
@@ -265,18 +224,7 @@ class _PickWidgetState extends State<PickWidget> {
                                     );
                                     return Text(snapshot.error.toString());
                                   } else {
-                                    // int fileCnt = 0, dirCnt = 0, size = 0;
-                                    // if (snapshot.data is File) {
-                                    //   fileCnt++;
-                                    //   size += snapshot.data;
-                                    // } else if (entity is Directory) {
-                                    //   dirCnt++;
-                                    // }
                                     Map<String, dynamic> result = snapshot.data;
-
-                                    // dirCntList.add(result['dirCnt']);
-                                    // fileCntList.add(result['fileCnt']);
-                                    // fileSizeList.add(result['size']);
                                     exist[index] =
                                         result['size'] > 0 ? true : false;
                                     return Text(
@@ -466,7 +414,7 @@ class _CopyWidgetState extends State<CopyWidget> {
             FilledButton(
               child: Text(backupButtonName),
               onPressed: () {
-                _backupProcess(targetMap);
+                _backupProcess(_targetMap);
               },
             ),
           ],

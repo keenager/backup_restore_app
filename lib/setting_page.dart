@@ -1,5 +1,7 @@
+import 'package:backup_restore_app/common_func.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'path_map.dart';
 
 class SettingPage extends StatefulWidget {
@@ -11,14 +13,7 @@ class SettingPage extends StatefulWidget {
 
 class _SettingPageState extends State<SettingPage> {
   String selectedPath = '없음';
-  final TextEditingController inputController = TextEditingController();
-
-  // Future<void> _addPath(String name, String path) async {
-  //   final _prefs = await prefs;
-
-  //   await _prefs.setString(name, path);
-  //   targetDirs[name] = path;
-  // }
+  final TextEditingController _inputController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -31,45 +26,76 @@ class _SettingPageState extends State<SettingPage> {
           Text('현재 백업 대상: '),
           Expanded(
             child: FutureBuilder<Map<String, String>>(
-                future: targetDirs,
-                builder: (BuildContext context,
-                    AsyncSnapshot<Map<String, String>> snapshot) {
-                  switch (snapshot.connectionState) {
-                    case ConnectionState.waiting:
-                      return ProgressBar();
-                    default:
-                      if (snapshot.hasError) {
-                        return Text('Error: ${snapshot.error}');
-                      } else {
-                        List entryList = snapshot.data!.entries.toList();
-                        return ListView.separated(
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              title: Text(entryList[index].key),
-                              trailing: defaultTargetDirs
-                                      .containsKey(entryList[index].key)
-                                  ? null
-                                  : IconButton(
-                                      icon: Icon(FluentIcons.delete),
-                                      onPressed: () async {
-                                        final _prefs = await prefs;
-                                        await _prefs
-                                            .remove(entryList[index].key);
-                                        targetDirs = getFinalTargetDirs();
-                                        setState(() {});
-                                      },
-                                    ),
-                            );
-                          },
-                          separatorBuilder: (context, index) => Divider(),
-                        );
-                      }
-                  }
-                }),
+              future: getFinalTargetDirs(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<Map<String, String>> snapshot) {
+                switch (snapshot.connectionState) {
+                  case ConnectionState.waiting:
+                    return ProgressBar();
+                  default:
+                    if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else {
+                      List entryList = snapshot.data!.entries.toList();
+                      return ListView.separated(
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(entryList[index].key),
+                            trailing: defaultTargetDirs
+                                    .containsKey(entryList[index].key)
+                                ? null
+                                : IconButton(
+                                    icon: Icon(FluentIcons.delete),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return ContentDialog(
+                                            title: Text('삭제'),
+                                            content: Text('삭제하시겠습니까?'),
+                                            actions: [
+                                              TextButton(
+                                                child: Text('Okay'),
+                                                onPressed: () async {
+                                                  final _prefs =
+                                                      await SharedPreferences
+                                                          .getInstance();
+                                                  await _prefs.remove(
+                                                      entryList[index].key);
+                                                  Navigator.pop(context);
+                                                  setState(() {});
+                                                },
+                                              ),
+                                              TextButton(
+                                                child: Text('Cancel'),
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                },
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                          );
+                        },
+                        separatorBuilder: (context, index) => Divider(),
+                      );
+                    }
+                }
+              },
+            ),
           ),
-          // Text('test: ${inputController.text}, $selectedPath'),
-          // Text('$targetDirs'),
+          TextButton(
+            child: Text('Tip'),
+            onPressed: () => myDialog(
+                context: context,
+                title: '설정 파일 저장 위치',
+                content:
+                    "개별 사용자가 추가한 백업 리스트는 백업하는 폴더 내에 shared_preference.json 파일로 저장됩니다. \n이 파일을 삭제하면 나중에 '불러오기'를 할 때 일부 대상이 빠지게 됩니다."),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -95,16 +121,15 @@ class _SettingPageState extends State<SettingPage> {
                 width: 250,
                 padding: EdgeInsets.all(10),
                 child: TextBox(
-                  controller: inputController,
+                  controller: _inputController,
                   placeholder: '이름을 입력하세요.',
                 ),
               ),
               FilledButton(
                   child: Text('저장'),
                   onPressed: () async {
-                    final _prefs = await prefs;
-                    await _prefs.setString(inputController.text, selectedPath);
-                    targetDirs = getFinalTargetDirs();
+                    final _prefs = await SharedPreferences.getInstance();
+                    await _prefs.setString(_inputController.text, selectedPath);
                     setState(() {});
                   }),
             ],
